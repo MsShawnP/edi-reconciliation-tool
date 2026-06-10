@@ -9,6 +9,20 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 19:48 — U2 shipped: synthetic X12 corpus generators and injector
+
+**What changed:** Built corpus/generator/x12_utils.py, partners/walmart.py, partners/unfi.py, partners/kehe.py, and corpus/generator/injector.py; added 17 U2 unit tests.
+
+**Why:** U2 is the corpus generation layer — nothing downstream (U3 parser, U4 staging, U5 matching) can be built without real X12 document strings to work with.
+
+**State:** 20 tests pass, 1 integration test skipped (DATABASE_URL not set). All 7 discrepancy classes wired in the injector. Partner quirks implemented: Walmart UoM (CA→EA), UNFI SLN promo + credit/rebill + missing PRF, KeHE REF*IA + multi-HL 856. PLAN.md U2 checkbox not yet updated.
+
+**Next:** Mark U2 complete in PLAN.md, then start U3 — Pre-flight parser extension. Pre-read edi-preflight repo (x12_tokenizer.py, envelope.py, extract_850.py) before writing parser/x12_parser.py.
+
+---
+
+---
+
 ## 2026-06-10 19:14 — WRAP: U1 shipped; ready for U2
 
 **Started from:** Planning arc complete, no code written. HANDOFF said: read Pre-flight parser + Cinderhaven schema before writing anything, then build U1.
