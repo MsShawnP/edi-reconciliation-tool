@@ -9,6 +9,27 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 19:14 — WRAP: U1 shipped; ready for U2
+
+**Started from:** Planning arc complete, no code written. HANDOFF said: read Pre-flight parser + Cinderhaven schema before writing anything, then build U1.
+
+**Did:**
+- Read Pre-flight tokenizer (x12_tokenizer.py, envelope.py, extract_850.py) and Cinderhaven raw_schema.sql before writing any code
+- Built corpus/generator/base.py — Cinderhaven canonical reader for all 3 partners (retailer + distributor pipelines), CanonicalOrder/Line/Shipment dataclasses, CorpusError
+- Built corpus/generator/ledger.py — DiscrepancyLedger (CSV + Parquet), DiscrepancyEntry, all 7 DiscrepancyClass values
+- Built corpus/generator/__init__.py — PartnerGenerator Protocol, GenerateResult type
+- Built tests/test_generator.py — 3 unit tests pass, 1 integration test skips until DATABASE_URL is set
+- Added pytest.ini (registers integration marker), requirements.txt (psycopg2-binary, pyarrow, fastapi, pytest)
+- Updated .gitignore (corpus/output/ gitignored), filled CLAUDE.md stack/voice placeholders
+- Fixed RuntimeWarning from eager imports in __init__.py (moved base.py imports under TYPE_CHECKING)
+- Committed in 2 commits: feat(U1) + log checkpoint
+
+**State:** U1 fully working. 3/4 tests pass (4th skipped pending live DB). No broken code. PLAN.md U1 marked complete.
+
+**Next:** U2 — corpus/generator/partners/walmart.py, unfi.py, kehe.py, and injector.py. Run `/ce:work` pointing at the plan doc. Pre-read the Cinderhaven seed_config.py PRODUCT_LINES and sku_costs before writing partner generators — you'll need partner-specific wholesale prices and case_pack_qty for the X12 PO1 segments.
+
+---
+
 ## 2026-06-10 19:14 — U1 complete: discrepancy ledger schema + corpus generator scaffold
 
 **What changed:** Built corpus/generator/base.py, ledger.py, __init__.py, and tests/test_generator.py.

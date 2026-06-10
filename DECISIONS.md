@@ -104,6 +104,15 @@ Each entry:
 
 ---
 
+## Python Conventions
+
+### 2026-06-10 — Use TYPE_CHECKING guards in package __init__.py; callers import from submodules directly
+- **Why:** Eager imports from submodules in `__init__.py` cause a RuntimeWarning in Python 3.12+ when running a submodule as `__main__` (e.g., `python -m corpus.generator.base`). The parent package is imported first, which imports the submodule, which then can't be set as `__main__`. Moving submodule imports under `TYPE_CHECKING` eliminates the warning. Callers import directly from the submodule path (`from corpus.generator.base import CanonicalOrder`), which is more explicit anyway.
+- **Scope:** All `__init__.py` files in this project
+- **Do not:** Import from sibling submodules at the top level of an `__init__.py`. Define Protocols, dataclasses, and type aliases inline; reference submodule types in `TYPE_CHECKING` blocks only.
+
+---
+
 ## Reversed / Superseded
 
 When a decision is overturned:
