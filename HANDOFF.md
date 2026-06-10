@@ -9,6 +9,45 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 — Full planning arc complete; ready to build
+
+**Started from:** New project setup.
+
+**Did:**
+- Ran full Heavy-tier planning workflow: /init → /clarify → /office-hours → /plan-ceo-review → /plan-eng-review → /ce:plan
+- All gates passed. No blockers.
+- Implementation plan written to `docs/plans/2026-06-10-001-feat-edi-reconciliation-pipeline-plan.md`
+- DECISIONS.md populated with all session decisions (13 entries)
+- PLAN.md arc defined with full scope and definition of done
+
+**Key decisions made this session:**
+- Synthetic-only corpus; no real-data upload path in v1
+- Stack: Python + Postgres + dbt + FastAPI + HTMX + D3 (no Dagster)
+- Multi-path key resolution: PO → ASN/BOL → Invoice (handles real-world missing PO refs)
+- dbt for match logic (SQL), Python for parse/load only
+- Discrepancy ledger is a first-class deliverable (not a test fixture)
+- 997 in v1, as secondary dashboard layer labeled "For EDI/Ops Teams"
+- All five deliverables required; no deadline
+- D3 lifecycle visual at 1200×628px, standalone SVG + dashboard embed
+
+**State:** Planning complete. No code written yet. Plan is the authoritative source for what to build.
+
+**Open items (non-blocking, resolve before or during build):**
+- CLAUDE.md still has template placeholders for "What this project is" and "Stack and tools" — fill in early in first build session
+- Subdomain not yet decided: `reconcile.lailarallc.com` vs. `edi.lailarallc.com/reconcile` — record in DECISIONS.md when decided (needed before U9)
+- CTA on Lailara portfolio page for how prospects engage — flagged in /plan-ceo-review; separate task, not a blocker for the build
+
+**Next session starts at:** U1 — Discrepancy ledger schema and corpus generator scaffold.
+
+Before writing any code:
+1. Read Pre-flight parser source in `edi-preflight` repo — confirm import interface
+2. Read Cinderhaven platform schema — confirm canonical orders/shipments/invoices column names
+3. Register new corpus seed in `CINDERHAVEN_CANONICAL.md`
+
+**Next command:** `/ce:work` — run it pointing at the plan doc.
+
+---
+
 ## 2026-06-10 17:33 — Project initialized
 
 **Started from:** New project setup.

@@ -5,19 +5,39 @@ session. For session-by-session state, see HANDOFF.md.
 
 ---
 
-## Goal
+## Goal — 2026-06-10 (clarify)
 
-[One sentence — what "done" looks like for this arc.]
+Build a portfolio piece demonstrating complete EDI content-level reconciliation — four-way match (850/856/810/820), 852 sell-through, and 997 acknowledgment tracking — across three synthetic trading partners (Walmart, UNFI, KeHE), structured to lead with CFO-visible dollar impact and prove the full methodology.
 
 ## Why this arc, why now
 
-[One or two sentences. The reason matters when you come back in three
-weeks and wonder why this was the priority.]
+Next #3 on the portfolio priority list. Extends EDI Pre-flight from "is this document valid?" to "do these documents agree?" and consolidates ~30 backlog EDI items into one build. The complete piece makes Lailara the most credible EDI-literate data consultancy in the niche.
 
 ## Business question this arc answers
 
-[One sentence. Direct connection to the project-level business question
-in CLAUDE.md.]
+For a specialty food brand with 3+ EDI trading partners, where are the content-level mismatches across 850/856/810/820 documents, and what revenue is leaking or at chargeback risk because no one is reconciling them?
+
+## Scope confirmed (2026-06-10)
+
+**In v1:**
+- Four-way match: 850 (ordered) vs 856 (shipped) vs 810 (invoiced) vs 820 (paid)
+- 852 sell-through reconciliation (UNFI/KeHE distributor channel)
+- 997 acknowledgment tracking
+- Synthetic X12 corpus only — three partners with partner-specific quirks
+- Structure: CFO-visible dollar impact leads; complete picture across all components follows
+
+**All five deliverables required, no deadline:**
+- Exception dashboard (web app)
+- PO lifecycle D3 visual (the LinkedIn hook)
+- Failure pattern catalog
+- Synthetic X12 corpus + generator
+- Matching SQL/dbt models
+
+**Out of scope for v1:**
+- Real-data client upload path (real data = paid engagement)
+- Real-time/streaming reconciliation
+- 830 forecast accuracy
+- EDI onboarding diagnostics
 
 ## Tasks
 
@@ -25,26 +45,33 @@ Work in vertical slices — one section/feature end-to-end before moving
 to the next. Visualizations get reviewed in their own slice, not
 deferred to a polish phase.
 
-- [ ] Specific, scoped, actionable
-- [ ] Each one is a thing Claude Code could plausibly finish in one
-      session
-- [ ] If a task feels too big, break it down before adding it
-- [x] Completed items stay struck or checked, so the trail is visible
+Full plan: `docs/plans/2026-06-10-001-feat-edi-reconciliation-pipeline-plan.md`
 
-## Out of scope for this arc
+**Phase 1 — Foundation**
+- [ ] U1: Discrepancy ledger schema + corpus generator scaffold
+- [ ] U2: Synthetic X12 corpus (Walmart, UNFI, KeHE)
+- [ ] U3: Pre-flight parser extension (all 6 doc types)
+- [ ] U4: Staging tables + dbt staging models
+- *Gate: domain expert reviews corpus + ledger; tolerance thresholds confirmed*
 
-- Things explicitly NOT being done in this round
-- Captures the decisions about what to defer
-- Prevents scope creep mid-session
+**Phase 2 — Matching engine**
+- [ ] U5: Key resolution + four-way match + 852 + 997 + exception mart
+- *Gate: validation script shows 100% recall, 0 false positives*
+
+**Phase 3 — Portfolio surface**
+- [ ] U6: FastAPI/HTMX exception dashboard (CFO-first layout)
+- [ ] U7: D3 PO lifecycle visual (standalone SVG + dashboard embed)
+- [ ] U8: Failure pattern catalog (7 exception classes)
+- [ ] U9: Deployment + orchestration (Makefile + Fly.io)
 
 ## Definition of done for this arc
 
-- [ ] Specific, verifiable conditions
-- [ ] Not "the prose is better" — "every section's executive summary
-      has been reviewed and either approved or marked for domain
-      insertion"
-- [ ] When all of these are checked, the arc is done and a new PLAN.md
-      arc gets defined
+- [ ] Exception dashboard live at subdomain, showing all failure classes with dollar values
+- [ ] PO lifecycle D3 visual renders and is LinkedIn-shareable
+- [ ] Failure pattern catalog page published
+- [ ] Synthetic X12 corpus committed to repo with generator script
+- [ ] Matching SQL/dbt models in repo, documented
+- [ ] 997 acknowledgment failure class visible in dashboard
 
 ---
 
