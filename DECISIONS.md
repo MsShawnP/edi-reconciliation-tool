@@ -104,6 +104,20 @@ Each entry:
 
 ---
 
+## Corpus Generator Conventions
+
+### 2026-06-10 — CASE_PACK dict in x12_utils.py is a maintained copy of the FROZEN seed_config.py block
+- **Why:** Generators can't cross-import from cinderhaven-data-platform. The FROZEN block in seed_config is stable by definition (editing it re-baselines the entire portfolio). Copying it into x12_utils.py is safe; drift risk is low. If the FROZEN block ever changes, x12_utils.CASE_PACK must be updated in the same PR.
+- **Scope:** `corpus/generator/x12_utils.py`, all partner generators
+- **Do not:** Import seed_config.py from across repos. Do not derive case_pack_qty from the Postgres schema — it's not guaranteed to be present on all partners' order_lines tables.
+
+### 2026-06-10 — Generators produce clean documents (empty ledger); Injector owns all discrepancy injection
+- **Why:** Separating generation from injection keeps the generators deterministic and testable in isolation. Structural partner quirks (Walmart CA→EA UoM, UNFI missing PRF on 820, KeHE multi-HL) are built into the generators as realistic document patterns but do NOT themselves write to the ledger. The Injector applies genuine mismatches (off-by-1 quantities, short payments, removed ASNs) and records them. This means the ground truth is entirely controlled by the Injector, not scattered across generators.
+- **Scope:** `corpus/generator/partners/*.py`, `corpus/generator/injector.py`
+- **Do not:** Have generators write to the ledger. Do not treat generator structural quirks as discrepancies — they are expected behavior that the matching engine's UoM conversion and key resolution must handle, not find as exceptions.
+
+---
+
 ## Python Conventions
 
 ### 2026-06-10 — Use TYPE_CHECKING guards in package __init__.py; callers import from submodules directly

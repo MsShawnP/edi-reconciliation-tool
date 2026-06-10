@@ -9,15 +9,22 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
-## 2026-06-10 19:48 — U2 shipped: synthetic X12 corpus generators and injector
+## 2026-06-10 19:48 — WRAP: U2 shipped; ready for U3
 
-**What changed:** Built corpus/generator/x12_utils.py, partners/walmart.py, partners/unfi.py, partners/kehe.py, and corpus/generator/injector.py; added 17 U2 unit tests.
+**Started from:** U1 complete. HANDOFF said: pre-read seed_config.py PRODUCT_LINES and sku_costs, then run /ce:work for U2.
 
-**Why:** U2 is the corpus generation layer — nothing downstream (U3 parser, U4 staging, U5 matching) can be built without real X12 document strings to work with.
+**Did:**
+- Pre-read seed_config.py (WHOLESALE_MULT, CASE_PACK, 50 SKUs), plan doc U2 spec, and existing scaffold (base.py, ledger.py, __init__.py)
+- Built x12_utils.py (shared ISA/GS envelope builder, CASE_PACK dict); partners/__init__.py
+- Built WalmartGenerator: 850/856/810/820/997; cases in PO1, eaches in IT1 (UoM quirk); first order → 2×856 partial shipment
+- Built UnfiGenerator: SLN promo on 850 PO1; credit+rebill 810 on 3rd order; every 3rd 820 omits REF*PO
+- Built KeheGenerator: REF*IA on 810; multi-stop 856 with 2 O-level HL loops
+- Built Injector: all 7 discrepancy classes at configurable rate; records to ledger
+- Added 17 U2 unit tests; 20 total pass (1 skipped)
 
-**State:** 20 tests pass, 1 integration test skipped (DATABASE_URL not set). All 7 discrepancy classes wired in the injector. Partner quirks implemented: Walmart UoM (CA→EA), UNFI SLN promo + credit/rebill + missing PRF, KeHE REF*IA + multi-HL 856. PLAN.md U2 checkbox not yet updated.
+**State:** U2 complete. 20 tests pass, 1 skipped (DATABASE_URL). PLAN.md U2 marked complete. No broken code.
 
-**Next:** Mark U2 complete in PLAN.md, then start U3 — Pre-flight parser extension. Pre-read edi-preflight repo (x12_tokenizer.py, envelope.py, extract_850.py) before writing parser/x12_parser.py.
+**Next:** U3 — Pre-flight parser extension. Pre-read edi-preflight repo (x12_tokenizer.py, envelope.py, extract_850.py) before writing parser/x12_parser.py and parser/models.py. U2 corpus strings are now available as test fixtures for U3 parser tests.
 
 ---
 
