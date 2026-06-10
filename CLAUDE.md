@@ -2,18 +2,17 @@
 
 ## What this project is
 
-[One paragraph. What it is, who it's for, what done looks like at the
-highest level. Filled in based on the 95% confidence prompt conversation.]
+A complete EDI content-level reconciliation pipeline and portfolio piece. Generates a synthetic X12 corpus across three trading partners (Walmart, UNFI, KeHE) from Cinderhaven canonical data, reconciles 850/856/810/820/852/997 documents via a multi-path key resolution matching engine in dbt + Postgres, and surfaces dollar-ranked exceptions in a FastAPI/HTMX dashboard. Full deliverable answers: "Where are the content-level mismatches, and what revenue is leaking or at chargeback risk?" Priced as an $18K–$30K engagement for brands with 3+ EDI trading partners.
 
 **Business question this project answers:** For a specialty food brand with 3+ EDI trading partners, where are the content-level mismatches across 850/856/810/820 documents, and what revenue is leaking or at chargeback risk because no one is reconciling them?
 
 ## Stack and tools
 
-- Primary language: [your language — e.g., JavaScript, Python, Ruby, etc.]
-- Key packages/libraries: [list the main ones you're using]
-- Database: [if applicable — or remove this line]
-- Entry point: [the main file that starts your project — e.g., index.js, app.py, main.rb]
-- Other tools: [anything else relevant — framework, hosting, etc.]
+- Primary language: Python 3.13
+- Key packages: psycopg2-binary (Postgres), pyarrow (Parquet), dbt-postgres (matching models), FastAPI + Jinja2 (dashboard), pytest (tests)
+- Database: Postgres — Cinderhaven data platform (cinderhaven-data-platform repo, raw schema)
+- Entry point: `dashboard/app.py` (FastAPI) — run with `uvicorn dashboard.app:app`
+- Other tools: dbt for match logic (transforms/), D3.js for lifecycle visual, Makefile for orchestration, Fly.io for deployment
 
 ## Project files
 

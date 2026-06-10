@@ -1,0 +1,13 @@
+# Core pipeline
+psycopg2-binary
+pyarrow
+
+# Web / dashboard (U6)
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+
+# Testing
+pytest
+pytest-asyncio
