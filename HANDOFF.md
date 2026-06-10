@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 19:14 — U1 complete: discrepancy ledger schema + corpus generator scaffold
+
+**What changed:** Built corpus/generator/base.py, ledger.py, __init__.py, and tests/test_generator.py.
+
+**Why:** U1 is the critical-path starting point — nothing downstream (U2 partner generators, U5 matching engine) can be built without the canonical data reader and ledger contract.
+
+**State:** 3 unit tests passing; integration test (test_base_connects_and_returns_orders) skipped pending DATABASE_URL. CLAUDE.md stack/voice placeholders filled. corpus/output/ gitignored. Pre-flight parser interface and Cinderhaven raw schema confirmed before writing.
+
+**Next:** U2 — corpus/generator/partners/walmart.py, unfi.py, kehe.py, and injector.py. Run `/ce:work` pointing at the plan doc.
+
+---
+
 ## 2026-06-10 — Full planning arc complete; ready to build
 
 **Started from:** New project setup.
