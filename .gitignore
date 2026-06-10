@@ -1,0 +1,30 @@
+# Rendered output
+*.html
+_freeze/
+_site/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Rdata
+renv/library/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment and secrets
+.env
+*.env
+
+# Data files (uncomment if needed)
+# *.db
+# *.sqlite
+# data/raw/
+
+# OS
+.DS_Store
+Thumbs.db
