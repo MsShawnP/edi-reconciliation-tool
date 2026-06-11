@@ -61,7 +61,7 @@ Full plan: `docs/plans/2026-06-10-001-feat-edi-reconciliation-pipeline-plan.md`
 **Phase 3 — Portfolio surface**
 - [x] U6: FastAPI/HTMX exception dashboard (CFO-first layout)
 - [x] U7: D3 PO lifecycle visual (standalone SVG + dashboard embed)
-- [ ] U8: Failure pattern catalog (7 exception classes)
+- [x] U8: Failure pattern catalog (7 exception classes)
 - [ ] U9: Deployment + orchestration (Makefile + Fly.io)
 
 ## Definition of done for this arc

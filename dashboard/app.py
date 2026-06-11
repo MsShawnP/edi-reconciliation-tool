@@ -34,6 +34,7 @@ _ROOT = Path(__file__).parent
 app = FastAPI(title="EDI Reconciliation Dashboard", docs_url=None, redoc_url=None)
 app.mount("/static",  StaticFiles(directory=str(_ROOT / "static")),         name="static")
 app.mount("/visuals", StaticFiles(directory=str(_ROOT.parent / "visuals")), name="visuals")
+# Starlette 1.0+ requires request as the first argument to TemplateResponse.
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 
 
@@ -52,8 +53,7 @@ async def dashboard(
     partners   = get_partners()
     db_ok      = db.is_configured()
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request":          request,
+    return templates.TemplateResponse(request, "dashboard.html", {
         "summary":          summary,
         "exceptions":       exceptions,
         "partners":         partners,
@@ -76,8 +76,7 @@ async def exception_rows(
     exception_class: str = Query(default="", alias="class"),
 ):
     exceptions = get_exceptions(partner=partner, exception_class=exception_class)
-    return templates.TemplateResponse("_exception_rows.html", {
-        "request":    request,
+    return templates.TemplateResponse(request, "_exception_rows.html", {
         "exceptions": exceptions,
     })
 
@@ -89,9 +88,8 @@ async def exception_rows(
 @app.get("/ack-status", response_class=HTMLResponse)
 async def ack_status(request: Request):
     acks = get_997_status()
-    return templates.TemplateResponse("_ack_rows.html", {
-        "request": request,
-        "acks":    acks,
+    return templates.TemplateResponse(request, "_ack_rows.html", {
+        "acks": acks,
     })
 
 
@@ -104,8 +102,7 @@ async def lifecycle_page(request: Request):
     stats = get_lifecycle_stats()
     # json.dumps with ensure_ascii=True is safe to embed in <script type="application/json">
     lifecycle_json = json.dumps(stats or {})
-    return templates.TemplateResponse("lifecycle.html", {
-        "request":        request,
+    return templates.TemplateResponse(request, "lifecycle.html", {
         "active_page":    "lifecycle",
         "db_ok":          db.is_configured(),
         "lifecycle_json": lifecycle_json,
@@ -118,8 +115,7 @@ async def lifecycle_page(request: Request):
 
 @app.get("/catalog", response_class=HTMLResponse)
 async def catalog_page(request: Request):
-    return templates.TemplateResponse("catalog.html", {
-        "request":     request,
+    return templates.TemplateResponse(request, "catalog.html", {
         "active_page": "catalog",
         "patterns":    get_patterns(),
     })
