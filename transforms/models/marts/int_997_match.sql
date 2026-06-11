@@ -68,9 +68,14 @@ select
     a.acceptance_code,
 
     -- flag ACKs outside the 48-hour window (late or missing)
+    -- interval '48 hours' rather than + 2 (date integer): the boundary is
+    -- 48 clock-hours from the document date (midnight), not "2 calendar days later".
+    -- Both doc_date and ack_date are dates (no sub-day precision), so an ACK on
+    -- exactly day D+2 tests as NOT late (date casts to midnight, equal to deadline,
+    -- and the > comparison is false).
     case
-        when a.ack_date is null                 then true   -- no ACK at all
-        when a.ack_date > d.doc_date + 2        then true   -- received late
+        when a.ack_date is null                              then true   -- no ACK at all
+        when a.ack_date > d.doc_date + interval '48 hours'  then true   -- received late
         else false
     end                                         as ack_missing_or_late,
 

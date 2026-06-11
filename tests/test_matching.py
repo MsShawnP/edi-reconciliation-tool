@@ -242,6 +242,27 @@ class TestMatch997:
         """)
         assert accepted >= 1, "clean corpus should have at least one accepted 997 ACK"
 
+    def test_997_ack_at_48h_boundary_is_not_late(self):
+        """An ACK dated exactly D+2 must not be flagged late under the interval '48 hours' rule.
+
+        date '2024-01-01' + interval '48 hours' = timestamp '2024-01-03 00:00'.
+        date '2024-01-03' casts to the same midnight timestamp — the > test is false
+        (equal, not greater), so the ACK is on-time.
+        """
+        is_late = _scalar("""
+            select date '2024-01-03' > date '2024-01-01' + interval '48 hours'
+        """)
+        assert is_late is False, \
+            "ACK on day D+2 should not be flagged late under the 48-hour interval rule"
+
+    def test_997_ack_past_48h_is_late(self):
+        """An ACK dated D+3 must be flagged late."""
+        is_late = _scalar("""
+            select date '2024-01-04' > date '2024-01-01' + interval '48 hours'
+        """)
+        assert is_late is True, \
+            "ACK on day D+3 should be flagged late under the 48-hour interval rule"
+
 
 # ---------------------------------------------------------------------------
 # fct_exceptions
