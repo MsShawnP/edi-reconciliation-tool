@@ -66,12 +66,12 @@ Full plan: `docs/plans/2026-06-10-001-feat-edi-reconciliation-pipeline-plan.md`
 
 ## Definition of done for this arc
 
-- [ ] Exception dashboard live at subdomain, showing all failure classes with dollar values
-- [ ] PO lifecycle D3 visual renders and is LinkedIn-shareable
-- [ ] Failure pattern catalog page published
-- [ ] Synthetic X12 corpus committed to repo with generator script
-- [ ] Matching SQL/dbt models in repo, documented
-- [ ] 997 acknowledgment failure class visible in dashboard
+- [x] Exception dashboard live at subdomain, showing all failure classes with dollar values
+- [x] PO lifecycle D3 visual renders and is LinkedIn-shareable
+- [x] Failure pattern catalog page published
+- [x] Synthetic X12 corpus committed to repo with generator script
+- [x] Matching SQL/dbt models in repo, documented
+- [x] 997 acknowledgment failure class visible in dashboard
 
 ---
 
@@ -82,8 +82,8 @@ here. Then start a new arc above. Provides continuity without bloating
 the active plan.
 
 ### 2026-06-10 — EDI reconciliation pipeline (v1)
-- Outcome: All 9 units shipped. Synthetic X12 corpus (Walmart/UNFI/KeHE), dbt four-way match engine, FastAPI/HTMX exception dashboard, D3 lifecycle visual, failure pattern catalog, Fly.io deploy. Live at https://edi-reconciliation-tool.fly.dev/
-- Tag: v1.0.0 (suggested)
+- Outcome: All 9 units shipped. Synthetic X12 corpus (Walmart/UNFI/KeHE), dbt four-way match engine, FastAPI/HTMX exception dashboard, D3 lifecycle visual, failure pattern catalog, Fly.io deploy. Live at https://reconcile.lailarallc.com
+- Tag: v1.0.0 (2026-06-11)
 
 ---
 
