@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-11 01:38
+
+**What changed:** Deployed to Fly.io at https://edi-reconciliation-tool.fly.dev/; SSL cert provisioned for reconcile.lailarallc.com.
+
+**Why:** All 9 units were complete locally — deploy closes the portfolio arc. App needed a Dockerfile and .dockerignore, which were already created by a prior session. `fly postgres attach` failed (superuser auth issue on cinderhaven-db); DATABASE_URL was set manually using the flycast internal address and known credentials.
+
+**State:** 4 machines running, all health checks passing. App serves canonical demo data (150→138→150→131) — correct for fresh deploy with no corpus loaded into the Fly Postgres. DNS records for reconcile.lailarallc.com not yet added (need A + AAAA records in DNS provider; values in last session output).
+
+**Next:** Add DNS records for reconcile.lailarallc.com → 66.241.125.182 (A) and 2a09:8280:1::126:2290:1 (AAAA), then run `fly certs check reconcile.lailarallc.com --app edi-reconciliation-tool` to confirm cert issuance.
+
+---
+
 ## 2026-06-10 — Arc complete: all 9 units shipped
 
 **What changed:** U8 (failure pattern catalog) and U9 (Makefile + Fly.io) complete. All 9 units across Phase 1–3 are shipped and committed to main.
@@ -22,6 +34,23 @@ For things that didn't work, see FAILURES.md.
 **Remaining before "definition of done":** Deploy to Fly.io at `reconcile.lailarallc.com` (or confirm subdomain). That's the only item left from the definition-of-done checklist that requires an external action. Everything else is in the repo and running locally.
 
 **Next:** Either `/ce:review` on the full codebase, or deploy to Fly.io (`fly launch`, set `DATABASE_URL` secret, `fly deploy`).
+
+---
+
+## 2026-06-10 23:10 — WRAP
+
+**Started from:** U6+U7 complete but /log commit was mid-execution at compaction. Three files uncommitted: HANDOFF.md, dashboard/app.py, dashboard/templates/base.html.
+
+**Did:**
+- Completed interrupted U6+U7 /log commit (lifecycle.js improvements — server-injected data block, container ID fix)
+- Built U8: catalog/failure_patterns.md, dashboard/routes/catalog.py, catalog.html, CSS pattern-card components, nav link, /catalog route
+- Fixed Starlette 1.0.1 API break: TemplateResponse now takes request as first positional arg — was silently failing 4 route tests with Jinja2 LRU TypeError
+- Discovered linter had auto-committed U8 + U9 artifacts (Makefile, fly.toml, Dockerfile, pinned requirements) mid-session; all were correct
+- Deployed to Fly.io — https://edi-reconciliation-tool.fly.dev/ — 107MB image, 2 machines IAD, no DB (canonical example data)
+
+**State:** All 9 routes live. 80 unit tests pass, 25 skipped (DB). PLAN.md Phase 3 complete. Working tree clean. Live at fly.dev, no DATABASE_URL set.
+
+**Next:** Three options — (1) connect live data: `fly secrets set DATABASE_URL="..."`, (2) `/ce:review` before adding to portfolio page, (3) `/ce:compound` to extract Starlette 1.0 migration and Fly deploy patterns into docs/solutions/.
 
 ---
 

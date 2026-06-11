@@ -42,3 +42,17 @@ quarto" or "scope, scrollytelling, decoration"]
 **Status:** Resolved
 
 **Tags:** python, packaging, module, __main__, TYPE_CHECKING, RuntimeWarning
+
+---
+
+### 2026-06-10 — Starlette 1.0.x TemplateResponse API break causes silent Jinja2 LRU TypeError
+
+**Attempted:** Calling `templates.TemplateResponse("template.html", {"request": request, ...})` — the pre-1.0 Starlette API where `name` is the first positional arg and context is a dict containing `request`.
+
+**Why it didn't work:** Starlette 1.0.0 changed `TemplateResponse` to take `request` as the first positional argument. When called with the old signature, Starlette passes the context dict as the template `name` to Jinja2. Jinja2's LRU cache then tries to use the dict as a hash key, raising `TypeError: unhashable type: 'dict'`. The app starts cleanly — the error only surfaces at request time, making it easy to miss in pre-deploy checks.
+
+**What we tried instead:** Updated all `TemplateResponse` calls to the new signature: `templates.TemplateResponse(request, "template.html", {...})` with `request` removed from the context dict. Starlette 1.0+ still makes `request` available inside templates automatically. All 4 failing route tests resolved immediately.
+
+**Status:** Resolved
+
+**Tags:** starlette, jinja2, fastapi, templating, api-break, upgrade, lru-cache, TypeError
