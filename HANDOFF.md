@@ -9,6 +9,22 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 — Arc complete: all 9 units shipped
+
+**What changed:** U8 (failure pattern catalog) and U9 (Makefile + Fly.io) complete. All 9 units across Phase 1–3 are shipped and committed to main.
+
+**U8:** `catalog/failure_patterns.md`, `dashboard/routes/catalog.py`, `dashboard/templates/catalog.html`, nav link added to base.html. CSS pattern-card classes added to lailara.css. 3 new catalog route tests.
+
+**U9:** `Makefile` (corpus/parse/transform/validate/serve/test/clean targets), `fly.toml` (Fly.io iad region, 256MB, auto-start), `.env.example`, `requirements.txt` pinned to exact versions. 15/15 tests pass.
+
+**State:** 15 tests pass (all routes, all 7 catalog patterns, SVG dimensions, JS fallback). App imports cleanly. All routes functional: `/`, `/exceptions`, `/ack-status`, `/lifecycle`, `/api/lifecycle`, `/catalog`, `/static`, `/visuals`. PLAN.md all 9 tasks marked `[x]`.
+
+**Remaining before "definition of done":** Deploy to Fly.io at `reconcile.lailarallc.com` (or confirm subdomain). That's the only item left from the definition-of-done checklist that requires an external action. Everything else is in the repo and running locally.
+
+**Next:** Either `/ce:review` on the full codebase, or deploy to Fly.io (`fly launch`, set `DATABASE_URL` secret, `fly deploy`).
+
+---
+
 ## 2026-06-10 22:15
 
 **What changed:** U6 shipped — FastAPI/HTMX exception dashboard (CFO-first layout)
