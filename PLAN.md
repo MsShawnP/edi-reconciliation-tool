@@ -50,7 +50,7 @@ Full plan: `docs/plans/2026-06-10-001-feat-edi-reconciliation-pipeline-plan.md`
 **Phase 1 — Foundation**
 - [x] U1: Discrepancy ledger schema + corpus generator scaffold
 - [x] U2: Synthetic X12 corpus (Walmart, UNFI, KeHE)
-- [ ] U3: Pre-flight parser extension (all 6 doc types)
+- [x] U3: Pre-flight parser extension (all 6 doc types)
 - [ ] U4: Staging tables + dbt staging models
 - *Gate: domain expert reviews corpus + ledger; tolerance thresholds confirmed*
 
