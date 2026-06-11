@@ -315,6 +315,21 @@ class TestFctExceptions:
         assert dups == 0, \
             f"Found {dups} (partner_id, invoice_number) pairs with multiple short_pay rows — indicates N× double-counting"
 
+    def test_chargeback_classes_have_dispute_anchor(self):
+        """ordered_not_asnd, shipped_not_invoiced, uom_mismatch, qty_mismatch must
+        have a non-null dispute_date_anchor now that date columns are wired."""
+        bad = _scalar("""
+            select count(*)
+            from edi_marts.fct_exceptions
+            where exception_class in (
+                'ordered_not_asnd', 'shipped_not_invoiced',
+                'uom_mismatch', 'qty_mismatch'
+            )
+            and dispute_date_anchor is null
+        """)
+        assert bad == 0, \
+            f"{bad} chargeback exception rows still have null dispute_date_anchor"
+
     def test_dispute_urgent_matches_computed_expiry(self):
         """Every row whose dispute window has already passed must be marked dispute_urgent."""
         bad = _scalar("""

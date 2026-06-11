@@ -47,7 +47,8 @@ ordered_not_asnd as (
         'ordered_not_asnd'                          as exception_class,
         ordered_qty * unit_price                    as dollar_impact,
         60                                          as dispute_window_days,
-        null::date                                  as dispute_date_anchor,
+        -- no ASN exists for this class, so asn_date is NULL; use PO date instead
+        po_date                                     as dispute_date_anchor,
         null::text                                  as invoice_number,
         match_status
     from four_way
@@ -65,7 +66,8 @@ shipped_not_invoiced as (
         'shipped_not_invoiced'                      as exception_class,
         abs(shipped_vs_invoiced_delta) * unit_price as dollar_impact,
         60                                          as dispute_window_days,
-        null::date                                  as dispute_date_anchor,
+        -- clock from ship date: brand shipped, discrepancy originates at the dock
+        asn_date                                    as dispute_date_anchor,
         invoice_number,
         match_status
     from four_way
@@ -110,7 +112,8 @@ uom_mismatch as (
         'uom_mismatch'                              as exception_class,
         abs(ordered_vs_shipped_delta) * unit_price  as dollar_impact,
         60                                          as dispute_window_days,
-        null::date                                  as dispute_date_anchor,
+        -- clock from ship date: UoM divergence is detected from the ASN documents
+        asn_date                                    as dispute_date_anchor,
         invoice_number,
         match_status
     from four_way
@@ -128,7 +131,8 @@ qty_mismatch as (
         'qty_mismatch'                              as exception_class,
         abs(ordered_vs_shipped_delta) * unit_price  as dollar_impact,
         60                                          as dispute_window_days,
-        null::date                                  as dispute_date_anchor,
+        -- clock from ship date: quantity variance is a shipment-vs-order issue
+        asn_date                                    as dispute_date_anchor,
         invoice_number,
         match_status
     from four_way

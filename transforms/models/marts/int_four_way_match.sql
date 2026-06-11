@@ -38,7 +38,8 @@ asn_agg as (
         po_number,
         sku,
         sum(quantity)        as shipped_qty,
-        max(unit_of_measure) as shipped_uom
+        max(unit_of_measure) as shipped_uom,
+        max(ship_date)       as asn_date
     from {{ ref('stg_856_asns') }}
     group by 1, 2, 3
 ),
@@ -79,9 +80,11 @@ joined as (
         po.unit_of_measure                          as po_uom,
         po.quantity                                 as ordered_qty,
         po.unit_price,
+        po.po_date,
 
         asn.shipped_qty,
         asn.shipped_uom,
+        asn.asn_date,
         -- normalize shipped qty to PO UoM
         case
             when asn.shipped_qty is null
