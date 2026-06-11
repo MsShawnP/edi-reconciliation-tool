@@ -46,25 +46,29 @@
        ============================================================ -->
 
   <!-- Box 1 — ORDERED -->
-  <rect x="55" y="130" width="190" height="160" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" rx="2"/>
+  <rect x="55"  y="130" width="190" height="160" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" rx="2"/>
+  <rect x="55"  y="130" width="190" height="4"   fill="#1f2e7a" rx="2"/>
   <text class="t-label"  x="150" y="155" text-anchor="middle">ORDERED</text>
   <text class="t-number" x="150" y="228" text-anchor="middle" fill="#0d0d0d">150</text>
   <text class="t-unit"   x="150" y="256" text-anchor="middle">cases</text>
 
   <!-- Box 2 — SHIPPED -->
   <rect x="355" y="130" width="190" height="160" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" rx="2"/>
+  <rect x="355" y="130" width="190" height="4"   fill="#158f75" rx="2"/>
   <text class="t-label"  x="450" y="155" text-anchor="middle">SHIPPED</text>
   <text class="t-number" x="450" y="228" text-anchor="middle" fill="#b82d4a">138</text>
   <text class="t-unit"   x="450" y="256" text-anchor="middle">cases</text>
 
   <!-- Box 3 — INVOICED -->
   <rect x="655" y="130" width="190" height="160" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" rx="2"/>
+  <rect x="655" y="130" width="190" height="4"   fill="#ee8a2a" rx="2"/>
   <text class="t-label"  x="750" y="155" text-anchor="middle">INVOICED</text>
   <text class="t-number" x="750" y="228" text-anchor="middle" fill="#ee8a2a">150</text>
   <text class="t-unit"   x="750" y="256" text-anchor="middle">cases</text>
 
   <!-- Box 4 — PAID -->
-  <rect x="955" y="130" width="190" height="160" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" rx="2"/>
+  <rect x="955"  y="130" width="190" height="160" fill="#ffffff" stroke="#d9d9d9" stroke-width="1" rx="2"/>
+  <rect x="955"  y="130" width="190" height="4"   fill="#b82d4a" rx="2"/>
   <text class="t-label"  x="1050" y="155" text-anchor="middle">PAID</text>
   <text class="t-number" x="1050" y="228" text-anchor="middle" fill="#b82d4a">131</text>
   <text class="t-unit"   x="1050" y="256" text-anchor="middle">cases</text>

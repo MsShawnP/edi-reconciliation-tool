@@ -527,3 +527,290 @@ tbody td {
 
 .site-footer a { color: var(--text-secondary); }
 .site-footer a:hover { color: var(--text-primary); }
+
+/* --------------------------------------------------------------------------
+ * Chip modifiers (semantic — used by catalog and chips elsewhere)
+ * -------------------------------------------------------------------------- */
+.chip--warn {
+  background: var(--orange-surface);
+  color: var(--orange-text);
+  text-transform: none;
+}
+
+.chip--info {
+  background: var(--navy-surface);
+  color: var(--navy);
+  text-transform: none;
+}
+
+/* --------------------------------------------------------------------------
+ * Section title (catalog + any section heading)
+ * -------------------------------------------------------------------------- */
+.section-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 24px;
+}
+
+/* --------------------------------------------------------------------------
+ * Failure pattern catalog cards
+ * -------------------------------------------------------------------------- */
+.pattern-card {
+  border-left: 3px solid var(--rose);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--rose);
+  border-radius: 2px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.pattern-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.pattern-card__label {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.pattern-card__key {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.pattern-card__meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.pattern-card__short {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin: 0 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pattern-card__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .pattern-card__body { grid-template-columns: 1fr; }
+}
+
+.pattern-card__col {}
+
+.pattern-card__row-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.pattern-card__text {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.pattern-card__formula {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--navy);
+  background: var(--navy-surface);
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.pattern-card__partner-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pattern-card__partner-list li {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pattern-card__partner-list li:last-child { border-bottom: none; }
+
+.pattern-card__example {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.pattern-card__pre {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--surface);
+  padding: 12px 16px;
+  border-radius: 2px;
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+ * Section title
+ * -------------------------------------------------------------------------- */
+.section-title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+
+/* --------------------------------------------------------------------------
+ * Generic chip variants (catalog page)
+ * -------------------------------------------------------------------------- */
+.chip--warn { background: var(--orange-surface); color: var(--orange-text); }
+.chip--info { background: var(--navy-surface);   color: var(--navy); }
+
+/* --------------------------------------------------------------------------
+ * Failure pattern cards (catalog page)
+ * -------------------------------------------------------------------------- */
+.pattern-card {
+  border-left: 3px solid var(--rose);
+  background: #fff;
+  border-radius: 0 2px 2px 0;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.pattern-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pattern-card__label {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-right: 10px;
+}
+
+.pattern-card__key {
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 2px 7px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.pattern-card__meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pattern-card__short {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.pattern-card__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 640px) {
+  .pattern-card__body { grid-template-columns: 1fr; }
+}
+
+.pattern-card__row-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.pattern-card__text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.pattern-card__formula {
+  display: block;
+  font-size: 13px;
+  background: var(--surface);
+  padding: 6px 10px;
+  border-radius: 2px;
+  color: var(--text-primary);
+}
+
+.pattern-card__partner-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.pattern-card__partner-list li + li {
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+  margin-top: 4px;
+}
+
+.pattern-card__example {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.pattern-card__pre {
+  font-size: 12.5px;
+  background: var(--surface);
+  border-radius: 2px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre;
+}

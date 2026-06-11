@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Failure Pattern Catalog{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header__eyebrow">Methodology</div>
+  <h1 class="page-header__title">Failure Pattern Catalog</h1>
+  <p class="page-header__sub">
+    Seven exception classes produced by the four-way EDI match engine — what triggers each,
+    which documents diverge, and the dispute window governing remediation.
+  </p>
+</div>
+
+{# ---- Revenue-affecting patterns ---- #}
+<section class="section">
+  <h2 class="section-title">Revenue-Affecting Exceptions</h2>
+
+  {% for p in patterns if p.tier == 'revenue' %}
+  <div class="pattern-card">
+
+    <div class="pattern-card__header">
+      <div>
+        <span class="pattern-card__label">{{ p.label }}</span>
+        <code class="pattern-card__key">{{ p.key }}</code>
+      </div>
+      <div class="pattern-card__meta">
+        {% if p.dispute_days %}
+        <span class="chip chip--warn">{{ p.dispute_window }}</span>
+        {% endif %}
+        <span class="chip chip--info">{{ p.documents }}</span>
+      </div>
+    </div>
+
+    <p class="pattern-card__short">{{ p.short }}</p>
+
+    <div class="pattern-card__body">
+
+      <div class="pattern-card__col">
+        <div class="pattern-card__row-label">Why it matters</div>
+        <p class="pattern-card__text">{{ p.why }}</p>
+      </div>
+
+      <div class="pattern-card__col">
+        <div class="pattern-card__row-label">Dollar impact</div>
+        <code class="pattern-card__formula">{{ p.impact_formula }}</code>
+
+        {% if p.partners %}
+        <div class="pattern-card__row-label" style="margin-top:16px;">Partner patterns</div>
+        <ul class="pattern-card__partner-list">
+          {% for name, note in p.partners %}
+          <li><strong>{{ name }}</strong> — {{ note }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <div class="pattern-card__example">
+      <div class="pattern-card__row-label">Example</div>
+      <pre class="pattern-card__pre">{{ p.example }}</pre>
+    </div>
+
+  </div>
+  {% endfor %}
+</section>
+
+{# ---- Operational-only patterns ---- #}
+<div class="ops-section">
+  <div class="ops-section__label">For EDI / Ops Teams</div>
+  <h2 class="ops-section__title">Operational Exceptions</h2>
+  <p class="ops-section__sub">No dollar impact — transmission integrity and SLA compliance.</p>
+
+  {% for p in patterns if p.tier == 'ops' %}
+  <div class="pattern-card" style="border-left-color:var(--border);">
+
+    <div class="pattern-card__header">
+      <div>
+        <span class="pattern-card__label">{{ p.label }}</span>
+        <code class="pattern-card__key">{{ p.key }}</code>
+      </div>
+      <div class="pattern-card__meta">
+        <span class="chip chip--info">{{ p.documents }}</span>
+      </div>
+    </div>
+
+    <p class="pattern-card__short">{{ p.short }}</p>
+
+    <div class="pattern-card__body">
+
+      <div class="pattern-card__col">
+        <div class="pattern-card__row-label">Why it matters</div>
+        <p class="pattern-card__text">{{ p.why }}</p>
+      </div>
+
+      <div class="pattern-card__col">
+        {% if p.partners %}
+        <div class="pattern-card__row-label">Partner patterns</div>
+        <ul class="pattern-card__partner-list">
+          {% for name, note in p.partners %}
+          <li><strong>{{ name }}</strong> — {{ note }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <div class="pattern-card__example">
+      <div class="pattern-card__row-label">Example</div>
+      <pre class="pattern-card__pre">{{ p.example }}</pre>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+{# ---- Reference tables ---- #}
+<section class="section">
+  <h2 class="section-title">Quick Reference</h2>
+
+  <div style="overflow-x:auto;">
+    <table style="font-size:14px;">
+      <thead>
+        <tr>
+          <th>Exception class</th>
+          <th>Documents</th>
+          <th>Dollar impact formula</th>
+          <th>Dispute window</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patterns %}
+        <tr>
+          <td><code>{{ p.key }}</code></td>
+          <td>{{ p.documents }}</td>
+          <td><code>{{ p.impact_formula }}</code></td>
+          <td>
+            {% if p.dispute_days %}
+            <span class="chip chip--warn" style="font-size:11px;">{{ p.dispute_window }}</span>
+            {% else %}
+            <span style="color:var(--text-secondary);">{{ p.dispute_window }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size:13px;color:var(--text-secondary);margin-top:16px;">
+    Full documentation: <code>catalog/failure_patterns.md</code>
+    &mdash; dbt models: <code>transforms/models/marts/fct_exceptions.sql</code>
+  </p>
+</section>
+
+{% endblock %}

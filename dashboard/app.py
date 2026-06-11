@@ -27,6 +27,7 @@ from dashboard.routes.exceptions import (
     _CLASS_LABELS,
 )
 from dashboard.routes.lifecycle import get_lifecycle_stats
+from dashboard.routes.catalog import get_patterns
 
 _ROOT = Path(__file__).parent
 
@@ -108,6 +109,19 @@ async def lifecycle_page(request: Request):
         "active_page":    "lifecycle",
         "db_ok":          db.is_configured(),
         "lifecycle_json": lifecycle_json,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Failure pattern catalog (U8)
+# ---------------------------------------------------------------------------
+
+@app.get("/catalog", response_class=HTMLResponse)
+async def catalog_page(request: Request):
+    return templates.TemplateResponse("catalog.html", {
+        "request":     request,
+        "active_page": "catalog",
+        "patterns":    get_patterns(),
     })
 
 
