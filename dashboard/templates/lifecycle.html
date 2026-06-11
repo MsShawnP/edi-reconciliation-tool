@@ -9,19 +9,41 @@
   <h1 class="page-header__title">PO Lifecycle</h1>
   <p class="page-header__sub">
     Ordered → Shipped → Invoiced → Paid — where quantities diverge and dollars leak.
-    Built in U7.
+    Every step is a potential mismatch; every mismatch is either a chargeback brewing
+    or revenue already lost.
   </p>
 </div>
 
+{# ---- Live D3 visual ---- #}
 <section class="section">
-  <div class="empty-state">
-    <div class="empty-state__icon">◎</div>
-    <div class="empty-state__title">D3 visual coming in U7</div>
-    <p class="empty-state__note">
-      The standalone PO lifecycle SVG (1200×628px) and live D3 dashboard embed
-      are built in U7. This route is wired and ready.
+  <div id="lifecycle-chart" style="background:#fff; border:1px solid var(--border); border-radius:2px; padding:24px; min-height:320px;">
+    <p style="font-size:14px;color:var(--text-secondary);text-align:center;padding:60px 0;">
+      Loading lifecycle visual…
     </p>
   </div>
+  <p style="font-size:12px;color:var(--text-secondary);margin-top:10px;">
+    Numbers reflect Walmart (WALMARTUS) corpus totals.
+    Connect a database and run <code>dbt run --select marts</code> for live data;
+    the canonical example (150/138/150/131) displays when the mart is empty.
+  </p>
 </section>
+
+{# ---- Standalone SVG download ---- #}
+<section class="section">
+  <div style="border-top:1px solid var(--border);padding-top:32px;">
+    <div class="page-header__eyebrow">Standalone Visual</div>
+    <p style="font-size:15px;color:var(--text-secondary);margin:8px 0 16px;">
+      LinkedIn-shareable SVG at 1200×628 px — saved in <code>visuals/po_lifecycle.svg</code>.
+    </p>
+    <a href="/static/po_lifecycle.svg" download="po_lifecycle.svg" class="btn" target="_blank"
+       style="display:inline-block;text-decoration:none;">
+      Download SVG
+    </a>
+  </div>
+</section>
+
+{# D3 v7 + lifecycle rendering script #}
+<script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
+<script src="/static/js/lifecycle.js" defer></script>
 
 {% endblock %}
