@@ -156,7 +156,11 @@ final as (
                 then 'ordered_not_asnd'
             when not has_invoice
                 then 'asnd_not_invoiced'
+            -- NULL shipped_uom → treat as same as PO UoM (vendor omitted the field).
+            -- Normalization already applies no conversion for NULL (see asn_agg above).
+            -- The explicit `is not null` guard makes this consistent and readable.
             when abs(ordered_qty - shipped_qty_normalized) > {{ qty_tol }}
+                 and shipped_uom is not null
                  and shipped_uom != po_uom
                 then 'uom_mismatch'
             when abs(ordered_qty - shipped_qty_normalized) > {{ qty_tol }}

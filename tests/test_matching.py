@@ -152,6 +152,22 @@ class TestFourWayMatch:
         total = _scalar("select count(*) from edi_marts.int_four_way_match")
         assert total > 0, "int_four_way_match should have rows after corpus load"
 
+    def test_null_shipped_uom_not_classified_as_uom_mismatch(self):
+        """A row with NULL shipped_uom must not be classified as uom_mismatch.
+
+        NULL UoM is treated as 'same as PO UoM': no conversion in normalization,
+        and the explicit `is not null` guard in classification keeps it out of
+        the uom_mismatch branch.
+        """
+        bad = _scalar("""
+            select count(*)
+            from edi_marts.int_four_way_match
+            where shipped_uom is null
+              and match_status = 'uom_mismatch'
+        """)
+        assert bad == 0, \
+            f"{bad} rows have NULL shipped_uom but are classified as uom_mismatch"
+
     def test_walmart_uom_normalization(self):
         """Walmart 810 invoices in EA; after normalization matched rows should exist."""
         matched = _scalar("""

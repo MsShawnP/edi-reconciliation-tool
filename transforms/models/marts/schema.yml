@@ -25,6 +25,12 @@ models:
     description: >
       Four-way match: 850 PO lines joined to 856 ASN items, 810 invoice lines,
       and 820 remittance payments. UoM normalization applied. One row per PO line.
+
+      shipped_uom NULL semantics: a NULL shipped_uom is treated as "same as PO UoM"
+      (vendor omitted the field). Normalization applies no conversion; classification
+      skips the uom_mismatch branch. A quantity delta on a NULL-UoM row is classified
+      as qty_mismatch, not uom_mismatch — both paths treat the ASN qty as already in
+      PO units.
     columns:
       - name: partner_id
         tests: [not_null]
@@ -32,6 +38,10 @@ models:
         tests: [not_null]
       - name: sku
         tests: [not_null]
+      - name: shipped_uom
+        description: >
+          UoM from the 856 ASN. NULL means the vendor omitted the field; treated as
+          "same as PO UoM" in both normalization and classification.
       - name: match_status
         tests:
           - not_null
