@@ -294,3 +294,36 @@ class TestFctExceptions:
         total = _scalar("select count(*) from edi_marts.fct_exceptions")
         # Default injection rate is > 0, so at least one exception should exist.
         assert total > 0, "corpus generated with default injection rate should have at least one exception"
+
+    def test_short_pay_no_invoice_duplicates(self):
+        """Each invoice_number must appear at most once in short_pay exceptions.
+
+        invoice_amount is a document-level total replicated on every SKU row.
+        Without deduplication an N-SKU invoice contributes N× the true delta.
+        """
+        dups = _scalar("""
+            select count(*)
+            from (
+                select partner_id, invoice_number
+                from edi_marts.fct_exceptions
+                where exception_class = 'short_pay'
+                  and invoice_number is not null
+                group by partner_id, invoice_number
+                having count(*) > 1
+            ) dupes
+        """)
+        assert dups == 0, \
+            f"Found {dups} (partner_id, invoice_number) pairs with multiple short_pay rows — indicates N× double-counting"
+
+    def test_dispute_urgent_matches_computed_expiry(self):
+        """Every row whose dispute window has already passed must be marked dispute_urgent."""
+        bad = _scalar("""
+            select count(*)
+            from edi_marts.fct_exceptions
+            where dispute_date_anchor is not null
+              and dispute_window_days is not null
+              and (dispute_date_anchor + dispute_window_days * interval '1 day')::date < current_date
+              and dispute_urgent = false
+        """)
+        assert bad == 0, \
+            f"{bad} rows have an expired dispute window but dispute_urgent = false"

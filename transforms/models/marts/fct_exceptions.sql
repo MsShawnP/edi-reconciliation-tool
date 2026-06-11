@@ -76,7 +76,11 @@ shipped_not_invoiced as (
 -- short_pay: invoice amount > amount paid (beyond tolerance)
 -- ---------------------------------------------------------------------------
 short_pay as (
-    select
+    -- One row per invoice_number: invoice_amount is the document total replicated
+    -- on every SKU row, so without deduplication the delta is counted N times for
+    -- an N-SKU invoice. DISTINCT ON (partner_id, invoice_number) keeps the first
+    -- alphabetical SKU as a representative row — po_number/sku are display-only.
+    select distinct on (f.partner_id, f.invoice_number)
         f.partner_id,
         f.po_number,
         f.sku,
@@ -92,6 +96,7 @@ short_pay as (
         f.match_status
     from four_way f
     where f.match_status = 'short_pay'
+    order by f.partner_id, f.invoice_number, f.sku
 ),
 
 -- ---------------------------------------------------------------------------
