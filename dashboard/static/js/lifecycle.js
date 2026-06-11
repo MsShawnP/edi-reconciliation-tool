@@ -1,19 +1,21 @@
 /**
  * PO Lifecycle D3 visual — live version for the exception dashboard.
  *
- * Fetches /api/lifecycle for real corpus numbers.
- * Falls back to the canonical example (150/138/150/131) when the DB is offline.
+ * Reads lifecycle numbers from the #lifecycle-data JSON block injected
+ * server-side. Falls back to the canonical example (150/138/150/131)
+ * when the DB is not connected.
  *
  * Requires D3 v7 on the page before this script loads.
- * Renders into #lifecycle-chart.
+ * Renders into #lifecycle-visual.
  */
 (function () {
   "use strict";
 
-  const CANONICAL = { ordered: 150, shipped: 138, invoiced: 150, paid: 131 };
+  // Canonical fallback (plan spec: 150 ordered → 138 shipped → 150 invoiced → 131 paid)
+  var CANONICAL = { ordered: 150, shipped: 138, invoiced: 150, paid: 131, source: "canonical" };
 
-  // Design tokens (mirror lailara.css CSS vars — not readable from JS directly)
-  const C = {
+  // Lailara design system tokens (LAILARA_DESIGN_SYSTEM.md v2.0)
+  var C = {
     canvas:   "#f5f3ee",
     ink:      "#0d0d0d",
     border:   "#d9d9d9",
@@ -26,100 +28,109 @@
     orange:   "#ee8a2a",
     orSurf:   "#fdeee0",
     orBrd:    "#f6b97c",
-    red:      "#cc100a",
     serif:    "'Playfair Display', Georgia, serif",
-    sans:     "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif",
+    sans:     "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif",
   };
 
-  // Layout constants
-  const W = 1120, H = 480;          // inner SVG dimensions
-  const BOX_W = 170, BOX_H = 145;
-  const BOX_TOP = 88;
-  const BOX_CX = [130, 390, 650, 910]; // box center-x for 4 stages
-  const ARROW_Y = BOX_TOP + BOX_H / 2;
-  const CALL_TOP = BOX_TOP + BOX_H + 24;
-  const CALL_W = 150, CALL_H = 88;
+  // Layout constants (internal SVG coordinate space)
+  var W = 1120, H = 480;
+  var BOX_W = 170, BOX_H = 145;
+  var BOX_TOP = 88;
+  var BOX_CX = [130, 390, 650, 910];   // center-x for each of the 4 stage boxes
+  var ARROW_Y = BOX_TOP + BOX_H / 2;
+  var CALL_TOP = BOX_TOP + BOX_H + 24;
+  var CALL_W = 150, CALL_H = 88;
 
-  const STAGES = [
-    { key: "ordered",  label: "ORDERED",  color: C.ink },
-    { key: "shipped",  label: "SHIPPED",  color: C.rose },
+  var STAGES = [
+    { key: "ordered",  label: "ORDERED",  color: C.ink    },
+    { key: "shipped",  label: "SHIPPED",  color: C.rose   },
     { key: "invoiced", label: "INVOICED", color: C.orange },
-    { key: "paid",     label: "PAID",     color: C.rose },
+    { key: "paid",     label: "PAID",     color: C.rose   },
   ];
 
   function fmtDelta(a, b) {
-    const d = b - a;
+    var d = b - a;
     return (d >= 0 ? "+" : "−") + Math.abs(d).toLocaleString() + " cases";
   }
 
-  function calloutFill(a, b) {
-    const d = b - a;
-    if (d > 0) return { fill: C.orSurf, stroke: C.orBrd, color: C.orange };
-    return { fill: C.roseSurf, stroke: C.roseBrd, color: C.rose };
+  function calloutStyle(a, b) {
+    return (b > a)
+      ? { fill: C.orSurf,   stroke: C.orBrd,  color: C.orange }
+      : { fill: C.roseSurf, stroke: C.roseBrd, color: C.rose   };
   }
 
   function calloutDesc(i, data) {
     if (i === 0) return ["not shipped", "OTIF exposure"];
     if (i === 1) return data.invoiced > data.shipped
       ? ["invoiced, not in ASN", "unbilled risk"]
-      : ["ASN qty > invoice", "shipped-not-invoiced"];
+      : ["ASN qty > invoice qty", "shipped-not-invoiced"];
     return ["short-paid on remittance", "30-day dispute window"];
   }
 
   function render(data) {
-    const container = document.getElementById("lifecycle-chart");
+    var container = document.getElementById("lifecycle-visual");
     if (!container) return;
     container.innerHTML = "";
 
-    const svg = d3.select(container)
+    var svg = d3.select(container)
       .append("svg")
-      .attr("viewBox", `0 0 ${W} ${H}`)
+      .attr("viewBox", "0 0 " + W + " " + H)
       .attr("width", "100%")
-      .style("max-width", `${W}px`)
+      .style("max-width", W + "px")
+      .style("display", "block")
       .attr("role", "img")
-      .attr("aria-label", `PO Lifecycle: ${data.ordered} ordered, ${data.shipped} shipped, ${data.invoiced} invoiced, ${data.paid} paid`);
+      .attr("aria-label",
+        "PO Lifecycle: " + data.ordered + " ordered, " + data.shipped + " shipped, " +
+        data.invoiced + " invoiced, " + data.paid + " paid");
 
-    // Background
+    // Canvas background
     svg.append("rect").attr("width", W).attr("height", H).attr("fill", C.canvas);
 
-    // Title
+    // Section title
     svg.append("text")
       .attr("x", 20).attr("y", 32)
       .style("font-family", C.serif)
       .style("font-size", "18px")
       .style("font-weight", "700")
       .style("fill", C.ink)
-      .text("PO Lifecycle");
+      .text("PO Lifecycle — Four-Way EDI Match");
 
     svg.append("text")
       .attr("x", 20).attr("y", 54)
       .style("font-family", C.sans)
       .style("font-size", "13px")
       .style("fill", C.sub)
-      .text(data.source === "live" ? "Live from exception mart" : "Canonical example — connect database for live numbers");
+      .text(data.source === "live"
+        ? "Live from exception mart (edi_marts.int_four_way_match)"
+        : "Canonical example — connect to Postgres and run dbt for live numbers");
 
-    // Boxes
-    STAGES.forEach((stage, i) => {
-      const cx = BOX_CX[i];
-      const bx = cx - BOX_W / 2;
+    // Stage boxes
+    STAGES.forEach(function (stage, i) {
+      var cx = BOX_CX[i];
+      var bx = cx - BOX_W / 2;
 
+      // Box border
       svg.append("rect")
         .attr("x", bx).attr("y", BOX_TOP)
         .attr("width", BOX_W).attr("height", BOX_H)
-        .attr("fill", "#fff").attr("stroke", C.border).attr("stroke-width", 1)
+        .attr("fill", "#ffffff")
+        .attr("stroke", C.border)
+        .attr("stroke-width", 1)
         .attr("rx", 2);
 
+      // Stage label (uppercase, small)
       svg.append("text")
-        .attr("x", cx).attr("y", BOX_TOP + 20)
+        .attr("x", cx).attr("y", BOX_TOP + 22)
         .attr("text-anchor", "middle")
         .style("font-family", C.sans)
         .style("font-size", "10px")
-        .style("letter-spacing", "0.06em")
+        .style("letter-spacing", "0.07em")
         .style("fill", C.sub)
         .text(stage.label);
 
+      // Main quantity number
       svg.append("text")
-        .attr("x", cx).attr("y", BOX_TOP + 85)
+        .attr("x", cx).attr("y", BOX_TOP + 88)
         .attr("text-anchor", "middle")
         .style("font-family", C.serif)
         .style("font-size", "48px")
@@ -127,6 +138,7 @@
         .style("fill", stage.color)
         .text(data[stage.key].toLocaleString());
 
+      // "cases" unit
       svg.append("text")
         .attr("x", cx).attr("y", BOX_TOP + 112)
         .attr("text-anchor", "middle")
@@ -136,59 +148,66 @@
         .text("cases");
     });
 
-    // Arrows + callouts
-    const vals = [data.ordered, data.shipped, data.invoiced, data.paid];
-    for (let i = 0; i < 3; i++) {
-      const x1 = BOX_CX[i]   + BOX_W / 2;
-      const x2 = BOX_CX[i+1] - BOX_W / 2;
-      const mx = (x1 + x2) / 2;
+    // Arrows + callout boxes between each pair of stages
+    var vals = [data.ordered, data.shipped, data.invoiced, data.paid];
+    for (var i = 0; i < 3; i++) {
+      var x1 = BOX_CX[i]     + BOX_W / 2;
+      var x2 = BOX_CX[i + 1] - BOX_W / 2;
+      var mx = (x1 + x2) / 2;
 
-      // Arrow shaft + head
+      // Arrow shaft
       svg.append("line")
         .attr("x1", x1).attr("y1", ARROW_Y)
         .attr("x2", x2 - 8).attr("y2", ARROW_Y)
-        .attr("stroke", C.border).attr("stroke-width", 1.5);
+        .attr("stroke", C.border)
+        .attr("stroke-width", 1.5);
+
+      // Arrowhead
       svg.append("polygon")
-        .attr("points", `${x2},${ARROW_Y} ${x2-10},${ARROW_Y-5} ${x2-10},${ARROW_Y+5}`)
+        .attr("points", x2 + "," + ARROW_Y + " " + (x2 - 10) + "," + (ARROW_Y - 5) + " " + (x2 - 10) + "," + (ARROW_Y + 5))
         .attr("fill", C.border);
 
-      // Dashed stem
+      // Dashed drop stem from arrow to callout
       svg.append("line")
         .attr("x1", mx).attr("y1", BOX_TOP + BOX_H + 2)
         .attr("x2", mx).attr("y2", CALL_TOP - 2)
-        .attr("stroke", C.border).attr("stroke-width", 1)
+        .attr("stroke", C.border)
+        .attr("stroke-width", 1)
         .attr("stroke-dasharray", "3,3");
 
-      // Callout box
-      const style = calloutFill(vals[i], vals[i+1]);
+      // Callout box (colored by direction of change)
+      var style = calloutStyle(vals[i], vals[i + 1]);
       svg.append("rect")
         .attr("x", mx - CALL_W / 2).attr("y", CALL_TOP)
         .attr("width", CALL_W).attr("height", CALL_H)
-        .attr("fill", style.fill).attr("stroke", style.stroke).attr("stroke-width", 1)
+        .attr("fill", style.fill)
+        .attr("stroke", style.stroke)
+        .attr("stroke-width", 1)
         .attr("rx", 2);
 
-      // Delta text
+      // Delta quantity
       svg.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + 24)
+        .attr("x", mx).attr("y", CALL_TOP + 26)
         .attr("text-anchor", "middle")
         .style("font-family", C.sans)
         .style("font-size", "16px")
         .style("font-weight", "700")
         .style("fill", style.color)
-        .text(fmtDelta(vals[i], vals[i+1]));
+        .text(fmtDelta(vals[i], vals[i + 1]));
 
-      // Description
-      const descs = calloutDesc(i, data);
+      // First description line
+      var descs = calloutDesc(i, data);
       svg.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + 46)
+        .attr("x", mx).attr("y", CALL_TOP + 48)
         .attr("text-anchor", "middle")
         .style("font-family", C.sans)
         .style("font-size", "12px")
         .style("fill", C.sub)
         .text(descs[0]);
 
+      // Second description line
       svg.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + 63)
+        .attr("x", mx).attr("y", CALL_TOP + 65)
         .attr("text-anchor", "middle")
         .style("font-family", C.sans)
         .style("font-size", "12px")
@@ -196,32 +215,35 @@
         .text(descs[1]);
     }
 
-    // Footnote
+    // Footnote rule + text
     svg.append("line")
-      .attr("x1", 20).attr("y1", H - 32).attr("x2", W - 20).attr("y2", H - 32)
-      .attr("stroke", C.border).attr("stroke-width", 1);
+      .attr("x1", 20).attr("y1", H - 32)
+      .attr("x2", W - 20).attr("y2", H - 32)
+      .attr("stroke", C.border)
+      .attr("stroke-width", 1);
+
     svg.append("text")
       .attr("x", 20).attr("y", H - 16)
       .style("font-family", C.sans)
       .style("font-size", "11px")
       .style("fill", C.muted)
-      .text("Dollar impact at $47.50/case wholesale. Synthetic corpus — Cinderhaven platform.");
+      .text("Synthetic corpus — Walmart · UNFI · KeHE. UoM normalized to cases before comparison.");
   }
 
-  async function init() {
-    try {
-      const resp = await fetch("/api/lifecycle");
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      render(data);
-    } catch (_) {
-      render({ ...CANONICAL, source: "canonical" });
-    }
-  }
+  // Read server-injected data; fall back to canonical
+  var el = document.getElementById("lifecycle-data");
+  var serverData = null;
+  try { serverData = el ? JSON.parse(el.textContent) : null; } catch (_) {}
 
+  var data = (serverData && serverData.ordered > 0)
+    ? serverData
+    : CANONICAL;
+
+  // Render immediately (data is already available inline)
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", function () { render(data); });
   } else {
-    init();
+    render(data);
   }
-})();
+
+}());

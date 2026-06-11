@@ -21,6 +21,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 21:15
+
+**What changed:** U6 and U7 shipped — exception dashboard and PO lifecycle visual
+
+**Why:** U6 closes the gap between the exception mart and the portfolio surface. U7 adds the LinkedIn-shareable SVG and live D3 embed that make the visual story legible.
+
+**State:** 65 unit tests pass, 3 integration skipped (DB). App starts clean (`uvicorn dashboard.app:app`). 8 routes: `/`, `/exceptions`, `/ack-status`, `/lifecycle`, `/api/lifecycle`, `/static`, `/visuals`. `visuals/po_lifecycle.svg` committed at 1200×628. PLAN.md U6 and U7 marked complete.
+
+**Next:** U8 — Failure pattern catalog. Build `catalog/failure_patterns.md`, `dashboard/templates/catalog.html`, `dashboard/routes/catalog.py`, wire nav link. Pre-read the 7 exception classes from fct_exceptions.sql before writing catalog entries.
+
+---
+
 ## 2026-06-10 21:32
 
 **What changed:** U5 shipped — matching engine (key resolution, four-way match, 852, 997, exception mart)
