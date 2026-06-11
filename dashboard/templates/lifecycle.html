@@ -35,7 +35,7 @@
     <p style="font-size:15px;color:var(--text-secondary);margin:8px 0 16px;">
       LinkedIn-shareable SVG at 1200×628 px — saved in <code>visuals/po_lifecycle.svg</code>.
     </p>
-    <a href="/static/po_lifecycle.svg" download="po_lifecycle.svg" class="btn" target="_blank"
+    <a href="/visuals/po_lifecycle.svg" download="po_lifecycle.svg" class="btn" target="_blank"
        style="display:inline-block;text-decoration:none;">
       Download SVG
     </a>
@@ -43,7 +43,7 @@
 </section>
 
 {# D3 v7 + lifecycle rendering script #}
-<script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
+<script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous" defer></script>
 <script src="/static/js/lifecycle.js" defer></script>
 
 {% endblock %}

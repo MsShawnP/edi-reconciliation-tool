@@ -30,6 +30,7 @@ _ROOT = Path(__file__).parent
 
 app = FastAPI(title="EDI Reconciliation Dashboard", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(_ROOT / "static")), name="static")
+app.mount("/visuals", StaticFiles(directory=str(_ROOT.parent / "visuals")), name="visuals")
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 
 
