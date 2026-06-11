@@ -30,6 +30,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 20:21
+
+**What changed:** U3 shipped — Pre-flight parser extension for all 6 X12 doc types
+
+**Why:** Parser is the critical-path step between the synthetic corpus (U2) and the dbt staging models (U4) — nothing downstream can run without structured Python objects from the raw X12 strings.
+
+**State:** 41 tests pass, 1 skipped (DB integration). parse_document() handles 850/856/810/820/852/997 with all partner quirks (UNFI SLN promo, KeHE REF*IA, credit memos, multi-HL 856, UNFI 820 no-PO-ref). PLAN.md U3 marked complete.
+
+**Next:** U4 — staging tables + dbt staging models. Pre-read Cinderhaven platform dbt conventions (profile name, target schema) before writing profiles.yml. Run /ce:work pointing at the plan doc.
+
+---
+
 ## 2026-06-10 19:14 — WRAP: U1 shipped; ready for U2
 
 **Started from:** Planning arc complete, no code written. HANDOFF said: read Pre-flight parser + Cinderhaven schema before writing anything, then build U1.
