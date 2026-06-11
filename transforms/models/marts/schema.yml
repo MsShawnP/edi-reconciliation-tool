@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: int_document_links
+    description: >
+      Multi-path key resolution. Resolves every 856, 810, and 820 document to its
+      canonical PO anchor via three tiers: direct PO reference, invoice fallback, orphan.
+    columns:
+      - name: partner_id
+        tests: [not_null]
+      - name: document_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['856', '810', '820']
+      - name: document_reference
+        tests: [not_null]
+      - name: resolution_path
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['po_direct', 'invoice_fallback', 'orphan']
+
+  - name: int_four_way_match
+    description: >
+      Four-way match: 850 PO lines joined to 856 ASN items, 810 invoice lines,
+      and 820 remittance payments. UoM normalization applied. One row per PO line.
+    columns:
+      - name: partner_id
+        tests: [not_null]
+      - name: po_number
+        tests: [not_null]
+      - name: sku
+        tests: [not_null]
+      - name: match_status
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - matched
+                - ordered_not_asnd
+                - asnd_not_invoiced
+                - shipped_not_invoiced
+                - invoiced_not_paid
+                - short_pay
+                - uom_mismatch
+                - qty_mismatch
+
+  - name: int_852_match
+    description: >
+      852 sell-through reconciliation. Compares distributor-reported sell-through
+      against shipped quantity by partner/SKU/period.
+    columns:
+      - name: partner_id
+        tests: [not_null]
+      - name: report_id
+        tests: [not_null]
+      - name: sku
+        tests: [not_null]
+
+  - name: int_997_match
+    description: >
+      997 ACK coverage. For each outbound 856 and 810, flags whether a 997
+      acknowledgment was received within the 48-hour window.
+    columns:
+      - name: partner_id
+        tests: [not_null]
+      - name: document_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['856', '810']
+      - name: ack_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['accepted', 'accepted_with_errors', 'rejected', 'no_ack']
+
+  - name: fct_exceptions
+    description: >
+      Exception mart. All seven discrepancy classes unified in one table, with
+      dollar impact and dispute-window clocks. Dollar-ranked for CFO-first display.
+    columns:
+      - name: partner_id
+        tests: [not_null]
+      - name: exception_class
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - ordered_not_asnd
+                - shipped_not_invoiced
+                - short_pay
+                - uom_mismatch
+                - qty_mismatch
+                - 852_discrepancy
+                - missing_997_ack
+      - name: dollar_impact
+        tests: [not_null]

@@ -55,7 +55,7 @@ Full plan: `docs/plans/2026-06-10-001-feat-edi-reconciliation-pipeline-plan.md`
 - *Gate: domain expert reviews corpus + ledger; tolerance thresholds confirmed*
 
 **Phase 2 — Matching engine**
-- [ ] U5: Key resolution + four-way match + 852 + 997 + exception mart
+- [x] U5: Key resolution + four-way match + 852 + 997 + exception mart
 - *Gate: validation script shows 100% recall, 0 false positives*
 
 **Phase 3 — Portfolio surface**
