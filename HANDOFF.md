@@ -42,6 +42,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 20:51
+
+**What changed:** U4 shipped — staging tables, dbt project, loader, and loader tests
+
+**Why:** U4 closes the gap between the parser output (U3) and the dbt matching engine (U5) — loader writes structured rows to edi_raw, staging models type-cast and null-coerce them for match logic.
+
+**State:** 65 unit tests pass, 3 integration tests deselected (DB required). corpus/loader.py expand_* helpers + load_corpus(); transforms/ has full dbt project with 6 staging models, schema.yml column tests, uom_conversions.csv seed. PLAN.md U4 marked complete.
+
+**Next:** U5 — matching engine. Write dbt intermediates: int_document_links (key resolution), int_four_way_match, int_852_match, int_997_match, then fct_exceptions mart. Run /ce:work pointing at the plan doc.
+
+---
+
 ## 2026-06-10 19:14 — WRAP: U1 shipped; ready for U2
 
 **Started from:** Planning arc complete, no code written. HANDOFF said: read Pre-flight parser + Cinderhaven schema before writing anything, then build U1.
