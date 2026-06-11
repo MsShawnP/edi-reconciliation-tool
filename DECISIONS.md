@@ -125,6 +125,11 @@ Each entry:
 - **Scope:** All `__init__.py` files in this project
 - **Do not:** Import from sibling submodules at the top level of an `__init__.py`. Define Protocols, dataclasses, and type aliases inline; reference submodule types in `TYPE_CHECKING` blocks only.
 
+### 2026-06-10 — Starlette 1.0+: request is first arg to TemplateResponse, not a context dict key
+- **Why:** Starlette 1.0.0 changed `TemplateResponse(name, context)` to `TemplateResponse(request, name, context)`. The old signature silently passes the context dict as the template name to Jinja2, which raises `TypeError: unhashable type: 'dict'` in the LRU cache at request time (not import time — the app starts fine). All five dashboard route handlers were updated. Starlette 1.0+ automatically injects `request` into the template context from the first arg.
+- **Scope:** All `templates.TemplateResponse(...)` calls in `dashboard/app.py` and any future route files.
+- **Do not:** Put `request` inside the context dict. Pass it as the first positional argument: `templates.TemplateResponse(request, "template.html", {...})`.
+
 ---
 
 ## Reversed / Superseded

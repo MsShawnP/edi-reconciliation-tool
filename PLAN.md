@@ -81,9 +81,9 @@ When an arc completes, archive its goal, completion date, and outcome
 here. Then start a new arc above. Provides continuity without bloating
 the active plan.
 
-### [Date completed] — [Goal]
-- Outcome: [what shipped or what was decided]
-- Tag: [git tag if one was created]
+### 2026-06-10 — EDI reconciliation pipeline (v1)
+- Outcome: All 9 units shipped. Synthetic X12 corpus (Walmart/UNFI/KeHE), dbt four-way match engine, FastAPI/HTMX exception dashboard, D3 lifecycle visual, failure pattern catalog, Fly.io deploy. Live at https://edi-reconciliation-tool.fly.dev/
+- Tag: v1.0.0 (suggested)
 
 ---
 
