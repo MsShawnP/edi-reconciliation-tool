@@ -87,6 +87,23 @@ the active plan.
 
 ---
 
+## Deferred code-review findings
+
+From the /ce:code-review pass (2026-06-11). These were triaged out of the immediate fix wave.
+Fixed items (#4, #5, #23, #22, #11, #15) are committed; these stay open.
+
+| # | Severity | Finding | Files | Notes |
+|---|---|---|---|---|
+| #12 | P2 | Untested injector types — mapping-drift and 997-missing-ack are injected but have no integration test verifying they appear in the exception mart | `corpus/generator/injector.py`, `tests/test_matching.py` | Low risk; corpus generation is correct; tests would catch regressions |
+| #14 | P2 | Conditional assertion in `test_walmart_uom_normalization` — the assertion (`matched >= 1`) holds only if the injection rate leaves some clean Walmart orders; could become vacuous after injection-rate changes | `tests/test_matching.py:155` | Monitor if injection rate is raised above ~0.5 |
+| #16 | P1 | Double-injection divergence — ledger counts vs mart row counts may not agree because some injections affect documents not matched by the four-way engine | `corpus/generator/injector.py`, `transforms/models/marts/fct_exceptions.sql` | **INVESTIGATE BEFORE any figure from this tool is published or screenshotted** — ledger vs mart count divergence is the drift class we kill on sight |
+| #17 | P2 | $0 dollar impact on price-less PO1 lines — if a 850 PO1 segment omits unit_price, ordered_not_asnd and similar exceptions show $0 impact | `transforms/models/marts/fct_exceptions.sql` | The eventual fix is labeling ("impact unpriced"), never imputing a number |
+| #18 | P3 | Duplicate `_read_*_orders` helpers across partner generator modules | `corpus/generator/walmart.py`, `corpus/generator/unfi.py`, `corpus/generator/kehe.py` | Pure maintainability; no correctness issue |
+| #19 | P3 | Duplicate `_connect()` helper in `tests/test_matching.py` — identical to the module-level helper | `tests/test_matching.py` | Remove the duplicate before the test file grows further |
+| #24 | P2 | Agent-native parity gaps — no agent-callable tool surfaces exception data; dashboard is UI-only | `dashboard/routes/exceptions.py`, `dashboard/app.py` | Required if this tool is ever embedded in an AI workflow |
+
+---
+
 ## Improvement history
 
 Track when this project was reviewed and improved via /improve.
