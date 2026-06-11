@@ -5,7 +5,7 @@
 {% block content %}
 
 <!-- Server-injected lifecycle numbers for D3 (pure numeric JSON, safe without escaping) -->
-<script id="lifecycle-data" type="application/json">{{ lifecycle_json }}</script>
+<script id="lifecycle-data" type="application/json">{{ lifecycle_json | safe }}</script>
 
 <div class="page-header">
   <div class="page-header__eyebrow">Portfolio Visual</div>

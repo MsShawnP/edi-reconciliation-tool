@@ -1,11 +1,14 @@
 """Lifecycle visual data — four-way match funnel stats for the D3 embed."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import dashboard.db as db
 
-_SCHEMA = "edi_marts"
+logger = logging.getLogger(__name__)
+
+_SCHEMA = db.MARTS_SCHEMA
 
 
 def get_lifecycle_stats() -> dict[str, Any] | None:
@@ -57,4 +60,5 @@ def get_lifecycle_stats() -> dict[str, Any] | None:
             "short_pay_dollars": round(short_pay_dlrs, 2),
         }
     except Exception:
+        logger.exception("get_lifecycle_stats query failed")
         return None

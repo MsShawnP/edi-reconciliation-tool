@@ -341,14 +341,15 @@ def _get_sn1_qty(doc: str) -> int:
 
 
 def _reduce_rmr(doc: str, rng: random.Random) -> tuple[str, float]:
-    """Reduce the first RMR payment amount by $50–$500. Returns (doc, delta)."""
+    """Reduce the first RMR payment amount by up to 10% (max $500). Returns (doc, delta)."""
     lines = doc.split("\n")
     for i, seg in enumerate(lines):
         if seg.startswith("RMR*"):
             f = seg.rstrip("~").split("*")
             try:
                 orig = float(f[4])
-                delta = round(rng.uniform(50.0, min(500.0, orig * 0.1)), 2)
+                cap = min(500.0, orig * 0.1)
+                delta = round(rng.uniform(min(50.0, cap), cap), 2)
                 new_amt = round(orig - delta, 2)
                 f[4] = f"{new_amt:.2f}"
                 lines[i] = "*".join(f) + "~"

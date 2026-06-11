@@ -12,6 +12,10 @@ from typing import Any
 _conn = None
 _active_url: str | None = None
 
+# dbt materializes mart models under this schema (profile target +schema: marts → edi_marts).
+# Import in route modules instead of duplicating the literal.
+MARTS_SCHEMA: str = "edi_marts"
+
 
 def is_configured() -> bool:
     """Return True if DATABASE_URL is present in the environment."""
@@ -25,7 +29,7 @@ def _get_conn():
         raise RuntimeError("DATABASE_URL environment variable is not set")
     if _conn is None or _conn.closed or url != _active_url:
         import psycopg2  # noqa: PLC0415
-        _conn = psycopg2.connect(url)
+        _conn = psycopg2.connect(url, connect_timeout=5)
         _conn.autocommit = True
         _active_url = url
     return _conn

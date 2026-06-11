@@ -6,7 +6,7 @@ Run:
     uvicorn dashboard.app:app --reload
 
 Environment:
-    DATABASE_URL   or individual POSTGRES_* vars (see dashboard/routes/db.py)
+    DATABASE_URL   or individual POSTGRES_* vars (see dashboard/db.py)
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import dashboard.routes.db as db
+import dashboard.db as db
 from dashboard.routes.exceptions import (
     get_exception_summary,
     get_exceptions,
@@ -100,8 +100,9 @@ async def ack_status(request: Request):
 @app.get("/lifecycle", response_class=HTMLResponse)
 async def lifecycle_page(request: Request):
     stats = get_lifecycle_stats()
-    # json.dumps with ensure_ascii=True is safe to embed in <script type="application/json">
-    lifecycle_json = json.dumps(stats or {})
+    # json.dumps with ensure_ascii=True is safe to embed in <script type="application/json">.
+    # Include 'source' so the JS subtitle can distinguish live vs canonical data.
+    lifecycle_json = json.dumps({**stats, "source": "live"} if stats else {})
     return templates.TemplateResponse(request, "lifecycle.html", {
         "active_page":    "lifecycle",
         "db_ok":          db.is_configured(),

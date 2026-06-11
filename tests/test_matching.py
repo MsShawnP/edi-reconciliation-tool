@@ -86,7 +86,7 @@ class TestDocumentLinks:
             where document_type = '820'
               and resolution_path = 'invoice_fallback'
         """)
-        assert fallback >= 0, "invoice_fallback count should be non-negative"
+        assert fallback >= 1, "UNFI 820s without REF*PO should produce at least one invoice_fallback row"
 
     def test_resolution_path_values_are_valid(self):
         """All resolution paths must be one of the accepted values."""
@@ -161,7 +161,7 @@ class TestFourWayMatch:
               and match_status = 'matched'
         """)
         # Walmart corpus always has some clean orders — expect at least one matched row
-        assert matched >= 0, "Walmart matched row count should be non-negative"
+        assert matched >= 1, "Walmart corpus should have at least one matched row after UoM normalization"
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +224,7 @@ class TestMatch997:
         accepted = _scalar("""
             select count(*) from edi_marts.int_997_match where ack_status = 'accepted'
         """)
-        assert accepted >= 0, "accepted ack count should be non-negative"
+        assert accepted >= 1, "clean corpus should have at least one accepted 997 ACK"
 
 
 # ---------------------------------------------------------------------------
@@ -292,6 +292,5 @@ class TestFctExceptions:
     def test_injected_discrepancies_appear_in_mart(self):
         """Corpus with injected discrepancies should produce at least one exception row."""
         total = _scalar("select count(*) from edi_marts.fct_exceptions")
-        # NOTE: a clean corpus (zero injection rate) will legitimately produce 0 exceptions.
-        # This assertion only holds when the corpus was generated with a non-zero injection rate.
-        assert total >= 0, "fct_exceptions row count should be non-negative"
+        # Default injection rate is > 0, so at least one exception should exist.
+        assert total > 0, "corpus generated with default injection rate should have at least one exception"

@@ -5,13 +5,14 @@ All routes degrade gracefully when the database is not configured.
 """
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import dashboard.db as db
 
-# dbt materializes these under the target schema + model schema override.
-# With profile target="dev" and +schema: marts the resulting schema is "edi_marts".
-_SCHEMA = "edi_marts"
+logger = logging.getLogger(__name__)
+
+_SCHEMA = db.MARTS_SCHEMA
 
 # Dollar-ranked exception classes (ops-only class last)
 _REVENUE_CLASSES = [
@@ -86,6 +87,7 @@ def get_exception_summary() -> list[dict[str, Any]]:
                 })
         return result
     except Exception:
+        logger.exception("get_exception_summary query failed")
         return []
 
 
@@ -107,6 +109,7 @@ def get_exceptions(
             conditions.append("exception_class = %s")
             params.append(exception_class)
         where = " and ".join(conditions)
+        params.append(limit)
         rows = db.query(f"""
             select
                 partner_id,
@@ -122,13 +125,14 @@ def get_exceptions(
             from {_SCHEMA}.fct_exceptions
             where {where}
             order by dollar_impact desc nulls last
-            limit {limit}
+            limit %s
         """, tuple(params))
         for row in rows:
             row["dollar_fmt"] = _fmt_dollar(float(row["dollar_impact"] or 0))
             row["class_label"] = _CLASS_LABELS.get(row["exception_class"], row["exception_class"])
         return rows
     except Exception:
+        logger.exception("get_exceptions query failed")
         return []
 
 
@@ -140,6 +144,7 @@ def get_partners() -> list[str]:
         rows = db.query(f"select distinct partner_id from {_SCHEMA}.fct_exceptions order by 1")
         return [r["partner_id"] for r in rows]
     except Exception:
+        logger.exception("get_partners query failed")
         return []
 
 
@@ -164,4 +169,5 @@ def get_997_status() -> list[dict[str, Any]]:
         """)
         return rows
     except Exception:
+        logger.exception("get_997_status query failed")
         return []
