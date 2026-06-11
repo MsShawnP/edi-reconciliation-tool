@@ -1,0 +1,21 @@
+# dbt connection profile for edi-reconciliation-tool.
+# Connects to the same Cinderhaven Postgres instance; uses the edi_ schema prefix
+# to keep EDI staging and mart tables isolated from the Cinderhaven platform tables.
+#
+# Usage: copy this file to ~/.dbt/profiles.yml and set POSTGRES_PASSWORD,
+#        or add the edi_reconciliation block to your existing ~/.dbt/profiles.yml.
+#
+# Alternatively, run dbt with --profiles-dir transforms/ from the transforms/ directory.
+
+edi_reconciliation:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'postgres') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'cinderhaven') }}"
+      schema: edi
+      threads: 4

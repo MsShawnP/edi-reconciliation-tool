@@ -1,0 +1,99 @@
+version: 2
+
+models:
+  - name: stg_850_pos
+    description: Purchase order lines, one row per PO line item.
+    columns:
+      - name: isa_control_number
+        tests: [not_null]
+      - name: partner_id
+        tests: [not_null]
+      - name: po_number
+        tests: [not_null]
+      - name: po_date
+        tests: [not_null]
+      - name: sku
+        tests: [not_null]
+      - name: quantity
+        tests: [not_null]
+      - name: unit_price
+        tests: [not_null]
+
+  - name: stg_856_asns
+    description: ASN line items, one row per shipped item. po_number resolves to the PO in the containing HL loop.
+    columns:
+      - name: isa_control_number
+        tests: [not_null]
+      - name: partner_id
+        tests: [not_null]
+      - name: shipment_id
+        tests: [not_null]
+      - name: ship_date
+        tests: [not_null]
+      - name: sku
+        tests: [not_null]
+      - name: quantity
+        tests: [not_null]
+      - name: po_number
+        tests: [not_null]
+
+  - name: stg_810_invoices
+    description: Invoice lines, one row per IT1 segment. invoice_amount is negative for credit memos.
+    columns:
+      - name: isa_control_number
+        tests: [not_null]
+      - name: partner_id
+        tests: [not_null]
+      - name: invoice_number
+        tests: [not_null]
+      - name: invoice_date
+        tests: [not_null]
+      - name: sku
+        tests: [not_null]
+      - name: quantity
+        tests: [not_null]
+
+  - name: stg_820_remittances
+    description: Remittance lines, one row per RMR segment. po_number is null for UNFI remittances that omit REF*PO.
+    columns:
+      - name: isa_control_number
+        tests: [not_null]
+      - name: partner_id
+        tests: [not_null]
+      - name: payment_amount
+        tests: [not_null]
+      - name: payment_date
+        tests: [not_null]
+      - name: rmr_invoice_number
+        tests: [not_null]
+
+  - name: stg_852_activity
+    description: Product activity lines, one row per sell-through line item.
+    columns:
+      - name: isa_control_number
+        tests: [not_null]
+      - name: partner_id
+        tests: [not_null]
+      - name: report_id
+        tests: [not_null]
+      - name: sku
+        tests: [not_null]
+      - name: quantity
+        tests: [not_null]
+
+  - name: stg_997_acks
+    description: Functional acknowledgments, one row per interchange. acknowledged_gs_control links back to the GS control number of the acknowledged document group.
+    columns:
+      - name: isa_control_number
+        tests: [not_null]
+      - name: partner_id
+        tests: [not_null]
+      - name: acknowledged_functional_id
+        tests: [not_null]
+      - name: acknowledged_gs_control
+        tests: [not_null]
+      - name: acceptance_code
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['A', 'E', 'R']

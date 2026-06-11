@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: edi_raw
+    database: cinderhaven
+    schema: edi_raw
+    description: >
+      Raw EDI tables written by corpus/loader.py. One row per line item.
+      Truncated and reloaded on each corpus run. Grain documented per table.
+
+    tables:
+      - name: edi_850_pos_lines
+        description: Purchase order lines. Grain — isa_control_number × line_number.
+
+      - name: edi_856_asn_items
+        description: ASN shipment items. Grain — isa_control_number × line_number. item_po_number carries per-HL PO reference for multi-stop shipments.
+
+      - name: edi_810_invoice_lines
+        description: Invoice lines. Grain — isa_control_number × line_number. Credits have negative total_amount and is_credit = true.
+
+      - name: edi_820_remittance_lines
+        description: Remittance lines. Grain — isa_control_number × rmr_invoice_number. One row per RMR segment; po_number may be empty (UNFI key resolution fallback).
+
+      - name: edi_852_activity_lines
+        description: Product activity (sell-through) lines. Grain — isa_control_number × line_number.
+
+      - name: edi_997_acks
+        description: Functional acknowledgments. Grain — isa_control_number (one ACK per interchange).

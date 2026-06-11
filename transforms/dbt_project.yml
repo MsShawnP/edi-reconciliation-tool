@@ -1,0 +1,28 @@
+name: 'edi_reconciliation'
+version: '1.0.0'
+config-version: 2
+
+profile: 'edi_reconciliation'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  edi_reconciliation:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  edi_reconciliation:
+    uom_conversions:
+      +schema: staging
