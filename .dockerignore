@@ -1,0 +1,14 @@
+.git
+.claude
+.pytest_cache
+__pycache__
+*.pyc
+.env
+corpus/output/
+docs/
+tests/
+transforms/dbt_packages/
+transforms/target/
+transforms/logs/
+*.md
+!README.md
