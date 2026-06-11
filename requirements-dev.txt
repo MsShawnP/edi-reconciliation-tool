@@ -1,0 +1,10 @@
+# Development and pipeline dependencies not needed in the Docker image.
+# Install with: pip install -r requirements-dev.txt
+#
+# Includes all production requirements plus dbt for `make transform`.
+
+-r requirements.txt
+
+# dbt pipeline — required by `make transform` (dbt seed + dbt run)
+# Verify the pin matches your installed version: dbt --version
+dbt-postgres==1.8.3
