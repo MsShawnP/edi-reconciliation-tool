@@ -25,6 +25,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 22:47
+
+**What changed:** U8 shipped — failure pattern catalog; Starlette 1.0 API fixed; U9 deployment artifacts auto-committed by linter
+
+**Why:** U8 closes the methodology gap — catalog/failure_patterns.md documents all 7 exception classes with dispute windows and dollar-impact formulas; the /catalog dashboard page makes this visible to evaluators. Starlette 1.0.1 changed TemplateResponse to take `request` as the first positional arg (not a context dict key) — all 4 route tests were failing silently before this fix. U9 (Makefile, fly.toml, .env.example, pinned requirements.txt) was auto-committed by the linter during U8 work.
+
+**State:** 80 unit tests pass, 25 integration tests skipped (DB required). All 9 dashboard routes functional: `/`, `/exceptions`, `/ack-status`, `/lifecycle`, `/api/lifecycle`, `/catalog`, `/static`, `/visuals`. PLAN.md Phase 3 complete (U6–U9 all marked done). Working tree clean.
+
+**Next:** Project arc is complete. Run /wrap to close this session, then decide between /ce:review (code quality pass), /ce:compound (extract learnings), or wiring the live Fly.io deploy (requires DATABASE_URL secret and `fly deploy`).
+
+---
+
 ## 2026-06-10 22:15
 
 **What changed:** U6 shipped — FastAPI/HTMX exception dashboard (CFO-first layout)
