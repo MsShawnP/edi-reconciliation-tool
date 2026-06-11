@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}EDI Reconciliation{% endblock %} — Lailara LLC</title>
+  <link rel="stylesheet" href="/static/css/lailara.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <nav class="site-nav">
+      <span class="site-nav__brand">Lailara<span>.</span></span>
+      <ul class="site-nav__links">
+        <li><a href="/" class="{{ 'active' if active_page == 'dashboard' else '' }}">Exceptions</a></li>
+        <li><a href="/lifecycle" class="{{ 'active' if active_page == 'lifecycle' else '' }}">PO Lifecycle</a></li>
+      </ul>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <footer class="site-footer">
+      Built by <a href="https://lailarallc.com" target="_blank">Lailara LLC</a> —
+      data hygiene and analytics consulting for specialty food brands scaling into national retail.
+    </footer>
+
+  </div>
+</body>
+</html>

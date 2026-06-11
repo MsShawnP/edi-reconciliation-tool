@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 22:15
+
+**What changed:** U6 shipped — FastAPI/HTMX exception dashboard (CFO-first layout)
+
+**Why:** U6 is the primary portfolio surface — CFO/controller audience sees dollar-ranked exceptions above the fold; EDI/Ops team sees the 997 ACK status section below. Nothing is visible to an evaluator without this layer.
+
+**State:** 65 unit tests pass, 25 integration tests skipped (DB required). Dashboard routes: `/` (main), `/exceptions` (HTMX partial), `/ack-status` (997 partial), `/lifecycle` (U7 stub). App imports cleanly; gracefully shows empty state when no DB is configured. CSS uses Lailara design system tokens throughout — Playfair Display/Source Sans 3 via @font-face (woff2 files needed in `dashboard/static/fonts/` for production). PLAN.md U6 marked complete.
+
+**Next:** U7 — D3 PO lifecycle visual. Write `dashboard/static/js/lifecycle.js` (live D3 embed from fct_exceptions data) and `visuals/po_lifecycle.svg` (standalone 1200×628px LinkedIn-shareable SVG). Read LAILARA_DESIGN_SYSTEM.md before setting any color or font values.
+
+---
+
 ## 2026-06-10 21:32
 
 **What changed:** U5 shipped — matching engine (key resolution, four-way match, 852, 997, exception mart)

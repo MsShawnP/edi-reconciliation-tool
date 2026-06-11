@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Exception Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header__eyebrow">EDI Reconciliation</div>
+  <h1 class="page-header__title">Exception Dashboard</h1>
+  <p class="page-header__sub">
+    Content-level mismatches across 850 / 856 / 810 / 820 — dollar-ranked by revenue exposure.
+  </p>
+</div>
+
+{% if not db_ok %}
+<div class="empty-state">
+  <div class="empty-state__icon">⚠</div>
+  <div class="empty-state__title">No database connection</div>
+  <p class="empty-state__note">
+    Set <code>DATABASE_URL</code> or <code>POSTGRES_*</code> environment variables,
+    then run the corpus loader and dbt models.
+  </p>
+</div>
+{% else %}
+
+{# ---- Summary cards (dollar-ranked exception classes) ---- #}
+<section class="section">
+  {% if summary %}
+  <div class="cards-grid">
+    {% for card in summary %}
+    <div class="exception-card {{ 'exception-card--urgent' if card.any_urgent else '' }}">
+      <div class="exception-card__class">{{ card.label }}</div>
+      <div class="exception-card__amount {{ 'exception-card__amount--zero' if card.total_dollar_impact == 0 else '' }}">
+        {{ card.total_fmt }}
+      </div>
+      <div class="exception-card__count">{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}</div>
+      {% if card.any_urgent %}
+      <span class="urgent-badge" style="margin-top:8px;display:inline-block;">Dispute expiring</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state__title">No exceptions found</div>
+    <p class="empty-state__note">
+      The matching engine found no content-level mismatches in the current corpus.
+      Either the corpus was generated with a zero injection rate, or the dbt models
+      have not been run yet (<code>dbt run --select marts</code>).
+    </p>
+  </div>
+  {% endif %}
+</section>
+
+{# ---- Filter bar + exception table ---- #}
+{% if summary %}
+<section class="section">
+  <form
+    hx-get="/exceptions"
+    hx-target="#exception-rows"
+    hx-trigger="change, submit"
+    hx-indicator="#loading"
+  >
+    <div class="filter-bar">
+      <label for="partner-filter">Partner</label>
+      <select id="partner-filter" name="partner">
+        <option value="">All partners</option>
+        {% for p in partners %}
+        <option value="{{ p }}" {{ 'selected' if p == selected_partner else '' }}>{{ p }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="class-filter">Exception type</label>
+      <select id="class-filter" name="class">
+        <option value="">All types</option>
+        {% for key, label in class_labels.items() if key != 'missing_997_ack' %}
+        <option value="{{ key }}" {{ 'selected' if key == selected_class else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <span id="loading" class="htmx-indicator">Loading…</span>
+    </div>
+  </form>
+
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Partner</th>
+          <th>Exception type</th>
+          <th>PO number</th>
+          <th>SKU</th>
+          <th>Invoice</th>
+          <th style="text-align:right;">Dollar impact</th>
+          <th>Dispute window</th>
+        </tr>
+      </thead>
+      <tbody id="exception-rows">
+        {% include "_exception_rows.html" %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{# ---- 997 ACK status (EDI/Ops secondary layer) ---- #}
+<div class="ops-section">
+  <div class="ops-section__label">For EDI / Ops Teams</div>
+  <h2 class="ops-section__title">Transmission Acknowledgment Status</h2>
+  <p class="ops-section__sub">
+    Outbound documents (856 ASNs, 810 invoices) with missing, late, or rejected 997 ACKs.
+    No dollar impact — operational exposure only.
+  </p>
+
+  {% set acks = [] %}
+  {% if db_ok %}
+    {# Rendered on page load; HTMX refreshable via /ack-status #}
+    <div id="ack-table"
+         hx-get="/ack-status"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+      <p style="font-size:14px;color:var(--text-secondary);">Loading ACK status…</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endif %}{# end db_ok #}
+
+{% endblock %}

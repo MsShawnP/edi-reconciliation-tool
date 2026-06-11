@@ -1,0 +1,41 @@
+{% if acks %}
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Partner</th>
+        <th>Doc type</th>
+        <th>ISA control</th>
+        <th>Doc date</th>
+        <th>ACK status</th>
+        <th>ACK date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ack in acks %}
+      <tr>
+        <td><span class="partner-badge">{{ ack.partner_id }}</span></td>
+        <td style="font-weight:600;font-size:13px;">{{ ack.document_type }}</td>
+        <td style="font-family:monospace;font-size:12px;">{{ ack.isa_control_number }}</td>
+        <td style="font-size:13px;">{{ ack.doc_date or '—' }}</td>
+        <td>
+          <span class="chip ack-chip--{{ ack.ack_status }}">
+            {% if ack.ack_status == 'no_ack' %}missing
+            {% elif ack.ack_status == 'rejected' %}rejected
+            {% elif ack.ack_status == 'accepted_with_errors' %}errors
+            {% else %}{{ ack.ack_status }}
+            {% endif %}
+          </span>
+        </td>
+        <td style="font-size:13px;color:var(--text-secondary);">{{ ack.ack_date or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state" style="padding:32px 0;">
+  <div class="empty-state__title">All documents acknowledged</div>
+  <p class="empty-state__note">No missing or late 997 ACKs in the current corpus.</p>
+</div>
+{% endif %}

@@ -1,7 +1,8 @@
-# Rendered output
-*.html
+# Rendered output (Quarto/R Markdown generated HTML — NOT dashboard templates)
 _freeze/
 _site/
+*.html
+!dashboard/templates/*.html
 
 # R
 .Rproj.user/
