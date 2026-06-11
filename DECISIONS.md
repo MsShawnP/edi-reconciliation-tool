@@ -132,6 +132,15 @@ Each entry:
 
 ---
 
+## Deployment
+
+### 2026-06-11 — Use flycast internal hostname + manual secret for cross-app Postgres on Fly.io; skip `fly postgres attach`
+- **Why:** `fly postgres attach` authenticates as the Postgres superuser, which requires the cluster's internal superuser password — not the app-user credentials. On cinderhaven-db, these differ. `fly secrets set DATABASE_URL="postgresql://user:pass@<app>.flycast:5432/db"` achieves the same result without superuser auth. The `.flycast` hostname is Fly's internal DNS — only reachable within the same Fly org's private network, so credentials aren't exposed publicly.
+- **Scope:** Any future Fly.io deployment that connects to cinderhaven-db or another shared Fly Postgres cluster
+- **Do not:** Use `fly postgres attach` on cinderhaven-db — it will fail. Do not use the public `.fly.dev` hostname in DATABASE_URL — it routes through the public internet and would require TLS configuration.
+
+---
+
 ## Reversed / Superseded
 
 When a decision is overturned:

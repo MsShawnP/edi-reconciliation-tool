@@ -45,6 +45,20 @@ quarto" or "scope, scrollytelling, decoration"]
 
 ---
 
+### 2026-06-11 — `fly postgres attach` fails with superuser auth error on managed clusters
+
+**Attempted:** Running `fly postgres attach cinderhaven-db --app edi-reconciliation-tool` to wire DATABASE_URL automatically.
+
+**Why it didn't work:** The Fly CLI's attach command authenticates as the `postgres` superuser using an internal mechanism that expects the cluster's superuser password. On cinderhaven-db, that superuser password differs from the app-user credentials. Error: `500: failed SASL auth (FATAL: password authentication failed for user "postgres")`.
+
+**What we tried instead:** Constructed DATABASE_URL manually using the Fly internal (flycast) hostname and the known `postgres` credentials from the local `.env`. Set with `fly secrets set DATABASE_URL="postgresql://postgres:<password>@cinderhaven-db.flycast:5432/cinderhaven"`. The flycast hostname (`<app>.flycast`) is only reachable within the same Fly organization's private network — correct for app-to-db communication.
+
+**Status:** Resolved
+
+**Tags:** fly.io, postgres, fly-postgres-attach, flycast, secrets, authentication, deploy
+
+---
+
 ### 2026-06-10 — Starlette 1.0.x TemplateResponse API break causes silent Jinja2 LRU TypeError
 
 **Attempted:** Calling `templates.TemplateResponse("template.html", {"request": request, ...})` — the pre-1.0 Starlette API where `name` is the first positional arg and context is a dict containing `request`.

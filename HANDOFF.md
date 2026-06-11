@@ -9,6 +9,23 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-11 — WRAP: All 9 units shipped; app live at fly.dev; DNS pending
+
+**Started from:** Session resumed believing U7 had unresolved bugs (lifecycle.js ID mismatch, missing base.html block); U8 and U9 pending; deploy not done.
+
+**Did:**
+- Verified U7 complete — alleged bugs were non-issues; lifecycle.js already targeted `lifecycle-visual` (not `lifecycle-chart`) and base.html already had `{% block extra_scripts %}` at line 29
+- Identified and fixed only missing piece for U8: added `.pattern-card`, `.section-title`, `.chip--warn`, `.chip--info` CSS classes to lailara.css
+- Created U9 artifacts: Makefile (corpus/parse/transform/validate/serve/test/clean targets), fly.toml (iad, 256MB, auto-start), .env.example, pinned requirements.txt
+- Deployed to Fly.io — https://edi-reconciliation-tool.fly.dev/ — 107MB image, 4 machines IAD, all health checks passing
+- Worked around `fly postgres attach` auth failure by constructing DATABASE_URL manually using flycast hostname (`cinderhaven-db.flycast:5432`) and credentials from local .env
+
+**State:** All 9 units complete. 15 tests pass, 25 integration tests skipped (DB). App live with canonical demo data (150→138→150→131). Working tree clean. DNS records for reconcile.lailarallc.com not yet added.
+
+**Next:** Add DNS A record `reconcile → 66.241.125.182` and AAAA `reconcile → 2a09:8280:1::126:2290:1` at DNS provider (DNS-only, no proxy). Then run `fly certs check reconcile.lailarallc.com --app edi-reconciliation-tool` to confirm cert issuance.
+
+---
+
 ## 2026-06-11 01:38
 
 **What changed:** Deployed to Fly.io at https://edi-reconciliation-tool.fly.dev/; SSL cert provisioned for reconcile.lailarallc.com.
