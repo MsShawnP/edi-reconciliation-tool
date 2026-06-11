@@ -4,46 +4,38 @@
 
 {% block content %}
 
+<!-- Server-injected lifecycle numbers for D3 (pure numeric JSON, safe without escaping) -->
+<script id="lifecycle-data" type="application/json">{{ lifecycle_json }}</script>
+
 <div class="page-header">
   <div class="page-header__eyebrow">Portfolio Visual</div>
   <h1 class="page-header__title">PO Lifecycle</h1>
   <p class="page-header__sub">
     Ordered → Shipped → Invoiced → Paid — where quantities diverge and dollars leak.
-    Every step is a potential mismatch; every mismatch is either a chargeback brewing
-    or revenue already lost.
+    {% if not db_ok %}
+    <span class="note--muted">(Showing canonical example — connect to Postgres for live corpus data.)</span>
+    {% endif %}
   </p>
 </div>
 
-{# ---- Live D3 visual ---- #}
 <section class="section">
-  <div id="lifecycle-chart" style="background:#fff; border:1px solid var(--border); border-radius:2px; padding:24px; min-height:320px;">
-    <p style="font-size:14px;color:var(--text-secondary);text-align:center;padding:60px 0;">
-      Loading lifecycle visual…
-    </p>
-  </div>
-  <p style="font-size:12px;color:var(--text-secondary);margin-top:10px;">
-    Numbers reflect Walmart (WALMARTUS) corpus totals.
-    Connect a database and run <code>dbt run --select marts</code> for live data;
-    the canonical example (150/138/150/131) displays when the mart is empty.
-  </p>
+  <!-- D3 renders the SVG into this container -->
+  <div id="lifecycle-visual" class="lifecycle-visual"></div>
 </section>
 
-{# ---- Standalone SVG download ---- #}
 <section class="section">
   <div style="border-top:1px solid var(--border);padding-top:32px;">
-    <div class="page-header__eyebrow">Standalone Visual</div>
+    <div class="page-header__eyebrow">Standalone Export</div>
     <p style="font-size:15px;color:var(--text-secondary);margin:8px 0 16px;">
-      LinkedIn-shareable SVG at 1200×628 px — saved in <code>visuals/po_lifecycle.svg</code>.
+      LinkedIn-shareable SVG at 1200&times;628 px &mdash; saved in <code>visuals/po_lifecycle.svg</code>.
     </p>
-    <a href="/visuals/po_lifecycle.svg" download="po_lifecycle.svg" class="btn" target="_blank"
-       style="display:inline-block;text-decoration:none;">
-      Download SVG
-    </a>
+    <a href="/visuals/po_lifecycle.svg" download="po_lifecycle.svg" class="btn">Download SVG</a>
   </div>
 </section>
 
-{# D3 v7 + lifecycle rendering script #}
-<script src="https://d3js.org/d3.v7.min.js" crossorigin="anonymous" defer></script>
-<script src="/static/js/lifecycle.js" defer></script>
+{% endblock %}
 
+{% block extra_scripts %}
+<script src="https://unpkg.com/d3@7/dist/d3.min.js" crossorigin="anonymous"></script>
+<script src="/static/js/lifecycle.js"></script>
 {% endblock %}

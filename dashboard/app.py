@@ -10,6 +10,7 @@ Environment:
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Query
@@ -25,11 +26,12 @@ from dashboard.routes.exceptions import (
     get_997_status,
     _CLASS_LABELS,
 )
+from dashboard.routes.lifecycle import get_lifecycle_stats
 
 _ROOT = Path(__file__).parent
 
 app = FastAPI(title="EDI Reconciliation Dashboard", docs_url=None, redoc_url=None)
-app.mount("/static", StaticFiles(directory=str(_ROOT / "static")), name="static")
+app.mount("/static",  StaticFiles(directory=str(_ROOT / "static")),         name="static")
 app.mount("/visuals", StaticFiles(directory=str(_ROOT.parent / "visuals")), name="visuals")
 templates = Jinja2Templates(directory=str(_ROOT / "templates"))
 
@@ -98,48 +100,28 @@ async def ack_status(request: Request):
 
 @app.get("/lifecycle", response_class=HTMLResponse)
 async def lifecycle_page(request: Request):
+    stats = get_lifecycle_stats()
+    # json.dumps with ensure_ascii=True is safe to embed in <script type="application/json">
+    lifecycle_json = json.dumps(stats or {})
     return templates.TemplateResponse("lifecycle.html", {
-        "request":     request,
-        "active_page": "lifecycle",
+        "request":        request,
+        "active_page":    "lifecycle",
+        "db_ok":          db.is_configured(),
+        "lifecycle_json": lifecycle_json,
     })
 
 
 # ---------------------------------------------------------------------------
-# API: lifecycle numbers for D3 visual
+# API: lifecycle numbers for the D3 visual (JSON endpoint)
 # ---------------------------------------------------------------------------
-# Sums Walmart PO lifecycle quantities for the live D3 chart.
-# Falls back to the canonical example (150/138/150/131) when DB is offline
-# or the mart tables haven't been populated yet.
-_CANONICAL = {"ordered": 150, "shipped": 138, "invoiced": 150, "paid": 131, "source": "canonical"}
-
-_LIFECYCLE_SQL = """
-    select
-        coalesce(sum(ordered_qty),              0)::int as ordered,
-        coalesce(sum(shipped_qty_normalized),   0)::int as shipped,
-        coalesce(sum(invoiced_qty_normalized),  0)::int as invoiced,
-        coalesce(
-            sum(coalesce(paid_amount, 0) / nullif(unit_price, 0)), 0
-        )::int                                          as paid
-    from edi_marts.int_four_way_match
-    where partner_id = 'WALMARTUS'
-"""
-
 
 @app.get("/api/lifecycle")
 async def api_lifecycle() -> JSONResponse:
-    if not db.is_configured():
-        return JSONResponse({**_CANONICAL, "source": "canonical"})
-    try:
-        rows = db.query(_LIFECYCLE_SQL)
-        if rows and rows[0].get("ordered"):
-            r = rows[0]
-            return JSONResponse({
-                "ordered":  int(r["ordered"]),
-                "shipped":  int(r["shipped"]),
-                "invoiced": int(r["invoiced"]),
-                "paid":     int(r["paid"]),
-                "source":   "live",
-            })
-        return JSONResponse({**_CANONICAL, "source": "canonical"})
-    except Exception:
-        return JSONResponse({**_CANONICAL, "source": "canonical"})
+    stats = get_lifecycle_stats()
+    if stats:
+        return JSONResponse({**stats, "source": "live"})
+    return JSONResponse({
+        "ordered": 150, "shipped": 138, "invoiced": 150, "paid": 131,
+        "shipped_short": 12, "invoiced_excess": 12, "short_pay_dollars": 2400.0,
+        "source": "canonical",
+    })
