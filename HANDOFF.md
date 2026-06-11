@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-10 21:32
+
+**What changed:** U5 shipped — matching engine (key resolution, four-way match, 852, 997, exception mart)
+
+**Why:** U5 is the core reconciliation logic — without it the exception mart is empty and the dashboard has nothing to display. All downstream units (U6 dashboard, U7 visual, U8 catalog) depend on fct_exceptions being populated.
+
+**State:** 65 unit tests pass, 47 integration tests deselected (DB required). 5 dbt mart models written: int_document_links, int_four_way_match, int_852_match, int_997_match, fct_exceptions. PLAN.md U5 marked complete. Phase 2 complete.
+
+**Next:** U6 — FastAPI/HTMX exception dashboard. Pre-read LAILARA_DESIGN_SYSTEM.md before writing any CSS. Run /ce:work pointing at the plan doc.
+
+---
+
 ## 2026-06-10 19:48 — WRAP: U2 shipped; ready for U3
 
 **Started from:** U1 complete. HANDOFF said: pre-read seed_config.py PRODUCT_LINES and sku_costs, then run /ce:work for U2.
