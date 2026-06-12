@@ -154,6 +154,16 @@
     Full documentation: <code>catalog/failure_patterns.md</code>
     &mdash; dbt models: <code>transforms/models/marts/fct_exceptions.sql</code>
   </p>
+
+  <p class="cascade-footnote" style="font-size:13px;color:var(--text-secondary);margin-top:16px;max-width:660px;line-height:1.5;">
+    <strong>Cascade semantics.</strong> The matching engine assigns exactly one status per PO line,
+    evaluated in precedence order: missing ASN → missing invoice → UoM mismatch → quantity
+    mismatch → shipped-not-invoiced → missing payment → short pay. A line failing an earlier
+    check is never evaluated against later checks — the first failure is the one that matters
+    for triage. Two injector classes (mapping drift and UoM mismatch on the 810 leg) are
+    structurally invisible to the mart by design; their presence is validated by
+    <code>corpus/validate.py</code>, not by per-class mart counts.
+  </p>
 </section>
 
 {% endblock %}

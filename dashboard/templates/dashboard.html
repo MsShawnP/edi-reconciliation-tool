@@ -100,6 +100,16 @@
       </tbody>
     </table>
   </div>
+
+  <p class="cascade-footnote" style="font-size:13px;color:var(--text-secondary);margin-top:16px;max-width:660px;line-height:1.5;">
+    <strong>Cascade semantics.</strong> The matching engine assigns exactly one status per PO line,
+    evaluated in precedence order: missing ASN → missing invoice → UoM mismatch → quantity
+    mismatch → shipped-not-invoiced → missing payment → short pay. A line failing an earlier
+    check is never evaluated against later checks — the first failure is the one that matters
+    for triage. Per-class counts therefore reflect the <em>primary</em> failure mode, not every
+    possible divergence on that line.
+  </p>
+
 </section>
 {% endif %}
 
