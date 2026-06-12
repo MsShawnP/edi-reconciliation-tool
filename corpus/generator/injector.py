@@ -33,13 +33,18 @@ class Injector:
         docs = {k: list(v) for k, v in result.documents.items()}
         ledger = result.ledger
 
+        # Guard: track which documents have already been injected so no
+        # single 856/810 receives two corruptions in the same pass.
+        injected_isas: set[str] = set()
+
         # Build lookup tables needed across injection types
         po_price = _build_po_price_index(docs.get("850", []))
-        po_to_856_idx = _build_po_to_doc_index(docs.get("856", []), _po_from_856)
+        po_to_856_idxs = _build_po_to_doc_indices(docs.get("856", []), _po_from_856)
 
         # 1. shipped-not-invoiced — increase SN1 qty in selected 856s
         docs["856"] = _inject_shipped_not_invoiced(
             docs.get("856", []), rng, rate, po_price, ledger, result.partner,
+            injected_isas,
         )
 
         # 2. short-pay — reduce RMR amount in selected 820s
@@ -47,21 +52,24 @@ class Injector:
             docs.get("820", []), rng, rate, ledger, result.partner,
         )
 
-        # 3. ordered-not-asnd — remove a 856 for a selected 850
+        # 3. ordered-not-asnd — remove ALL 856s for a selected 850's PO
         docs["850"], docs["856"] = _inject_ordered_not_asnd(
             docs.get("850", []), docs.get("856", []),
-            rng, rate, po_price, po_to_856_idx, ledger, result.partner,
+            rng, rate, po_price, po_to_856_idxs, ledger, result.partner,
+            injected_isas,
         )
 
         # 4. uom-mismatch — adjust Walmart IT1 eaches by a non-case-divisible delta
         if result.partner == "walmart":
             docs["810"] = _inject_uom_mismatch(
                 docs.get("810", []), rng, rate, ledger, result.partner,
+                injected_isas,
             )
 
         # 5. mapping-drift — replace a SKU in a 856 LIN segment with an unknown code
         docs["856"] = _inject_mapping_drift(
             docs.get("856", []), rng, rate, ledger, result.partner,
+            injected_isas,
         )
 
         # 6. 852-discrepancy — reduce ZA sell-through quantity in selected 852s
@@ -84,18 +92,21 @@ class Injector:
 def _inject_shipped_not_invoiced(
     docs: list[str], rng: random.Random, rate: float,
     po_price: dict[str, float], ledger, partner: str,
+    injected_isas: set[str],
 ) -> list[str]:
     out = []
     for doc in docs:
-        if rng.random() < rate:
+        isa = _isa_ctrl(doc)
+        if rng.random() < rate and isa not in injected_isas:
             po = _po_from_856(doc)
             unit_price = po_price.get(po, 100.0)
             doc, delta = _bump_sn1(doc, rng)
             if delta > 0:
+                injected_isas.add(isa)
                 ledger.record(DiscrepancyEntry(
                     partner=partner,
                     doc_type="856",
-                    isa_control_number=_isa_ctrl(doc),
+                    isa_control_number=isa,
                     field_path="SN1.quantity",
                     expected_value=str(_get_sn1_qty(doc) - delta),
                     actual_value=str(_get_sn1_qty(doc)),
@@ -132,45 +143,56 @@ def _inject_ordered_not_asnd(
     docs_850: list[str], docs_856: list[str],
     rng: random.Random, rate: float,
     po_price: dict[str, float],
-    po_to_856_idx: dict[str, int],
+    po_to_856_idxs: dict[str, list[int]],
     ledger, partner: str,
+    injected_isas: set[str],
 ) -> tuple[list[str], list[str]]:
     removal_idxs: set[int] = set()
     for doc_850 in docs_850:
-        if rng.random() < rate * 0.5:  # lower rate — removes a whole document
+        if rng.random() < rate * 0.5:  # lower rate — removes whole documents
             po = _po_from_850(doc_850)
-            if po in po_to_856_idx and po_to_856_idx[po] not in removal_idxs:
-                idx = po_to_856_idx[po]
+            if po not in po_to_856_idxs:
+                continue
+            idxs = po_to_856_idxs[po]
+            # Skip if any of this PO's 856s were already injected
+            if any(_isa_ctrl(docs_856[i]) in injected_isas for i in idxs if i not in removal_idxs):
+                continue
+            # Remove ALL 856s for this PO (fixes Walmart two-856 split)
+            for idx in idxs:
+                injected_isas.add(_isa_ctrl(docs_856[idx]))
                 removal_idxs.add(idx)
-                ordered_qty = _total_po1_qty(doc_850)
-                unit_price = po_price.get(po, 100.0)
-                ledger.record(DiscrepancyEntry(
-                    partner=partner,
-                    doc_type="850",
-                    isa_control_number=_isa_ctrl(doc_850),
-                    field_path="856.missing",
-                    expected_value=f"ASN for PO {po}",
-                    actual_value="none",
-                    discrepancy_class=DiscrepancyClass.ORDERED_NOT_ASND,
-                    dollar_impact=round(ordered_qty * unit_price, 2),
-                ))
+            ordered_qty = _total_po1_qty(doc_850)
+            unit_price = po_price.get(po, 100.0)
+            ledger.record(DiscrepancyEntry(
+                partner=partner,
+                doc_type="850",
+                isa_control_number=_isa_ctrl(doc_850),
+                field_path="856.missing",
+                expected_value=f"ASN for PO {po}",
+                actual_value="none",
+                discrepancy_class=DiscrepancyClass.ORDERED_NOT_ASND,
+                dollar_impact=round(ordered_qty * unit_price, 2),
+            ))
     new_856 = [doc for i, doc in enumerate(docs_856) if i not in removal_idxs]
     return docs_850, new_856
 
 
 def _inject_uom_mismatch(
     docs: list[str], rng: random.Random, rate: float, ledger, partner: str,
+    injected_isas: set[str],
 ) -> list[str]:
     """Add 1 extra each to an IT1 line so post-conversion qty diverges."""
     out = []
     for doc in docs:
-        if rng.random() < rate:
+        isa = _isa_ctrl(doc)
+        if rng.random() < rate and isa not in injected_isas:
             doc, modified = _bump_it1_ea(doc)
             if modified:
+                injected_isas.add(isa)
                 ledger.record(DiscrepancyEntry(
                     partner=partner,
                     doc_type="810",
-                    isa_control_number=_isa_ctrl(doc),
+                    isa_control_number=isa,
                     field_path="IT1.quantity_ea",
                     expected_value="case-exact",
                     actual_value="off-by-1-each",
@@ -183,16 +205,19 @@ def _inject_uom_mismatch(
 
 def _inject_mapping_drift(
     docs: list[str], rng: random.Random, rate: float, ledger, partner: str,
+    injected_isas: set[str],
 ) -> list[str]:
     out = []
     for doc in docs:
-        if rng.random() < rate * 0.5:
+        isa = _isa_ctrl(doc)
+        if rng.random() < rate * 0.5 and isa not in injected_isas:
             doc, replaced = _corrupt_lin_sku(doc)
             if replaced:
+                injected_isas.add(isa)
                 ledger.record(DiscrepancyEntry(
                     partner=partner,
                     doc_type="856",
-                    isa_control_number=_isa_ctrl(doc),
+                    isa_control_number=isa,
                     field_path="LIN.item_number",
                     expected_value="valid-sku",
                     actual_value="UNKNOWN-ITEM",
@@ -290,13 +315,13 @@ def _build_po_price_index(docs_850: list[str]) -> dict[str, float]:
     return index
 
 
-def _build_po_to_doc_index(docs: list[str], key_fn) -> dict[str, int]:
-    """Map key_fn(doc) → index in docs list (first occurrence wins)."""
-    index: dict[str, int] = {}
+def _build_po_to_doc_indices(docs: list[str], key_fn) -> dict[str, list[int]]:
+    """Map key_fn(doc) → ALL indices in docs list for that key."""
+    index: dict[str, list[int]] = {}
     for i, doc in enumerate(docs):
         k = key_fn(doc)
-        if k and k not in index:
-            index[k] = i
+        if k:
+            index.setdefault(k, []).append(i)
     return index
 
 
