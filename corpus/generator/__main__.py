@@ -4,21 +4,30 @@ Usage (via Makefile or direct):
     python -m corpus.generator --output corpus/output --seed 42
 
 Generates corpus for all three partners (Walmart, UNFI, KeHE), applies
-the injector, writes X12 files and discrepancy_ledger.csv to --output,
-and loads all documents into the edi_raw.* tables via corpus.loader.
+the injector, and loads documents into edi_raw.* tables in order-chunks
+so the Python process never holds more than --chunk-size orders in memory
+at once.
 
 DATABASE_URL must be set in the environment.
 """
 from __future__ import annotations
 
 import argparse
-import os
 import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 from corpus.generator.base import read_partner_orders, CorpusError, SUPPORTED_PARTNERS
 from corpus.generator.injector import Injector
-from corpus.loader import load_corpus
+from corpus.loader import (
+    _connect, _ensure_schema, _ensure_tables, _truncate_tables,
+    _insert_rows, _TABLES, _EXPANDERS,
+)
+from parser.x12_parser import parse_document
+from parser.models import X12ParseError
+
+BATCH_SIZE = 200  # DB rows per executemany call
 
 
 def _get_partner_generator(partner: str):
@@ -34,18 +43,65 @@ def _get_partner_generator(partner: str):
     raise ValueError(f"Unknown partner: {partner}")
 
 
+def _stream_load(result, conn, truncate: bool) -> dict[str, int]:
+    """Parse and insert one doc-type at a time, flushing every BATCH_SIZE rows."""
+    loaded_at = datetime.now(tz=timezone.utc)
+    row_counts: dict[str, int] = {k: 0 for k in _TABLES}
+
+    with conn:
+        with conn.cursor() as cur:
+            _ensure_schema(cur)
+            _ensure_tables(cur)
+            if truncate:
+                _truncate_tables(cur)
+
+            for doc_type, raw_docs in result.documents.items():
+                if doc_type not in _EXPANDERS:
+                    continue
+                expected_cls, expander = _EXPANDERS[doc_type]
+                batch: list = []
+
+                for raw in raw_docs:
+                    try:
+                        parsed = parse_document(raw)
+                    except X12ParseError as exc:
+                        print(f"    WARN {doc_type}: {exc}", flush=True)
+                        continue
+                    if not isinstance(parsed, expected_cls):
+                        continue
+                    batch.extend(expander(parsed, loaded_at))
+
+                    if len(batch) >= BATCH_SIZE:
+                        _insert_rows(cur, _TABLES[doc_type], batch)
+                        row_counts[doc_type] += len(batch)
+                        batch.clear()
+
+                if batch:
+                    _insert_rows(cur, _TABLES[doc_type], batch)
+                    row_counts[doc_type] += len(batch)
+
+                if row_counts[doc_type]:
+                    print(f"    {doc_type}: {row_counts[doc_type]} rows", flush=True)
+
+    return row_counts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate synthetic X12 corpus and load to Postgres."
     )
     parser.add_argument("--output", default="corpus/output",
-                        help="Directory to write X12 files and ledger CSV (default: corpus/output)")
+                        help="Directory for ledger CSV (default: corpus/output)")
     parser.add_argument("--seed", type=int, default=42,
-                        help="RNG seed for reproducible generation (default: 42)")
+                        help="RNG seed (default: 42)")
     parser.add_argument("--injection-rate", type=float, default=0.3,
-                        help="Fraction of documents to inject discrepancies into (default: 0.3)")
+                        help="Discrepancy injection rate (default: 0.3)")
     parser.add_argument("--no-load", action="store_true",
-                        help="Write files only; skip Postgres load")
+                        help="Skip Postgres load (ledger CSV only)")
+    parser.add_argument("--partners", default=",".join(sorted(SUPPORTED_PARTNERS)),
+                        help="Comma-separated partners to run (default: all)")
+    parser.add_argument("--chunk-size", type=int, default=200,
+                        help="Orders per generation+load chunk (default: 200)")
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -53,54 +109,64 @@ def main() -> int:
 
     from corpus.generator.ledger import DiscrepancyLedger
 
+    partners = [p.strip() for p in args.partners.split(",")]
     all_entries = []
-    total_docs: dict[str, int] = {}
+    total_rows: dict[str, int] = {}
+    first_chunk = True  # controls truncate — only on the very first DB write
 
-    for partner in sorted(SUPPORTED_PARTNERS):
-        print(f"  [{partner}] Reading canonical orders from Cinderhaven...", flush=True)
+    for partner in partners:
+        print(f"\n[{partner}] Reading canonical orders...", flush=True)
         try:
-            orders = read_partner_orders(partner)
+            all_orders = read_partner_orders(partner)
         except CorpusError as exc:
-            print(f"  [{partner}] ERROR: {exc}", file=sys.stderr)
+            print(f"[{partner}] ERROR: {exc}", file=sys.stderr)
             return 1
 
-        print(f"  [{partner}] Generating X12 corpus ({len(orders)} orders)...", flush=True)
         gen = _get_partner_generator(partner)
-        result = gen.generate(orders, seed=args.seed)
+        injector = Injector()
+        chunks = [
+            all_orders[i:i + args.chunk_size]
+            for i in range(0, len(all_orders), args.chunk_size)
+        ]
+        print(f"[{partner}] {len(all_orders)} orders -> {len(chunks)} chunks of <={args.chunk_size}", flush=True)
 
-        print(f"  [{partner}] Injecting discrepancies (rate={args.injection_rate})...", flush=True)
-        result = Injector().inject(result, rate=args.injection_rate, seed=args.seed)
+        for chunk_idx, orders in enumerate(chunks):
+            result = gen.generate(orders, seed=args.seed + chunk_idx)
+            result = injector.inject(result, rate=args.injection_rate, seed=args.seed + chunk_idx)
+            all_entries.extend(result.ledger.entries())
 
-        # Write X12 files to disk
-        partner_dir = output_dir / partner
-        partner_dir.mkdir(exist_ok=True)
-        for doc_type, docs in result.documents.items():
-            for i, raw in enumerate(docs):
-                (partner_dir / f"{doc_type}_{i:04d}.x12").write_text(raw, encoding="utf-8")
+            if args.no_load:
+                continue
 
-        # Accumulate ledger entries
-        all_entries.extend(result.ledger.entries())
+            doc_total = sum(len(d) for d in result.documents.values())
+            print(f"  chunk {chunk_idx+1}/{len(chunks)}: {len(orders)} orders, {doc_total} docs", flush=True)
 
-        # Track doc counts
-        for doc_type, docs in result.documents.items():
-            total_docs[doc_type] = total_docs.get(doc_type, 0) + len(docs)
+            for attempt in range(3):
+                try:
+                    conn = _connect()
+                    counts = _stream_load(result, conn, truncate=first_chunk)
+                    conn.close()
+                    first_chunk = False
+                    for dt, n in counts.items():
+                        total_rows[dt] = total_rows.get(dt, 0) + n
+                    break
+                except Exception as exc:
+                    if attempt == 2:
+                        print(f"  chunk {chunk_idx+1} FAILED: {exc}", file=sys.stderr)
+                        return 1
+                    print(f"  chunk {chunk_idx+1} retry {attempt+1}/3: {exc}", flush=True)
+                    time.sleep(5)
 
-        if not args.no_load:
-            print(f"  [{partner}] Loading {sum(len(d) for d in result.documents.values())} documents into edi_raw...", flush=True)
-            counts = load_corpus(result, truncate=(partner == sorted(SUPPORTED_PARTNERS)[0]))
-            for dt, n in counts.items():
-                print(f"    {dt}: {n} rows", flush=True)
+        print(f"[{partner}] Done.", flush=True)
 
-    # Write combined ledger CSV
     combined_ledger = DiscrepancyLedger()
     for entry in all_entries:
         combined_ledger.record(entry)
-
     paths = combined_ledger.write(output_dir)
-    print(f"\n  Ledger: {paths['csv']} ({len(all_entries)} entries)")
-    print(f"  X12 files written to: {output_dir}/")
-    print(f"  Document totals: { {k: v for k, v in sorted(total_docs.items())} }")
 
+    print(f"\nLedger: {paths['csv']} ({len(all_entries)} entries)")
+    if total_rows:
+        print(f"DB totals: { {k: v for k, v in sorted(total_rows.items()) if v} }")
     return 0
 
 
