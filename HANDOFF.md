@@ -9,6 +9,41 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-13 — WRAP: Full corpus loaded into Postgres; dbt transform pending
+
+**Started from:** Six code-review fixes committed (commits e3074c5, 91f5de1 this arc). Corpus load in progress — KeHE and UNFI done, Walmart mid-flight at chunk ~32/51.
+
+**Did:**
+- Monitored background corpus load (task b99bp2yyi) through Walmart completion
+- Confirmed exit code 0 and DB totals: 850→77,480 rows, 856→69,954, 810→77,682, 820→17,032, 852→36,619, 997→27,727
+- Discrepancy ledger: corpus/output/discrepancy_ledger.csv (22,451 entries)
+
+**What worked:** execute_values fix (from prior session, commit e3074c5) held — all 87 chunks across 3 partners completed cleanly with no retries. Per-chunk time ~2 min vs 5+ min before.
+
+**What didn't work:** Nothing this session. Load was stable end-to-end.
+
+**State:** edi_raw.* fully populated (all 3 partners). dbt transform NOT run. edi_staging.* and edi_marts.* do not exist yet. Integration tests not run. Fly proxy may need restarting (was running last session on PID varies).
+
+**Next:** Start here next session —
+1. `fly proxy 5433:5432 -a cinderhaven-db` (start proxy if not running)
+2. `cd transforms && dbt deps && dbt seed && dbt run` (build edi_staging.* + edi_marts.*)
+3. Run 4 AFTER queries to verify mart integrity (see below)
+4. `DATABASE_URL="postgresql://postgres:MillieMaggieLittleDude2026@localhost:5433/cinderhaven" python -m pytest tests/test_matching.py -m integration -v`
+
+**AFTER queries (copy-paste ready):**
+```sql
+-- Short-pay total and count
+SELECT COUNT(*) AS rows, ROUND(SUM(dollar_impact)::numeric,2) AS total FROM edi_marts.fct_exceptions WHERE exception_class = 'short_pay';
+-- dispute_urgent count
+SELECT COUNT(*) AS dispute_urgent FROM edi_marts.fct_exceptions WHERE dispute_urgent = true;
+-- NULL shipped_uom + uom_mismatch (must be 0)
+SELECT COUNT(*) AS null_uom_mismatch FROM edi_marts.int_four_way_match WHERE shipped_uom IS NULL AND match_status = 'uom_mismatch';
+-- Full exception class breakdown
+SELECT exception_class, COUNT(*) AS rows, ROUND(SUM(dollar_impact)::numeric,2) AS total FROM edi_marts.fct_exceptions GROUP BY exception_class ORDER BY total DESC;
+```
+
+---
+
 ## 2026-06-11 — WRAP: All 9 units shipped; app live at fly.dev; DNS pending
 
 **Started from:** Session resumed believing U7 had unresolved bugs (lifecycle.js ID mismatch, missing base.html block); U8 and U9 pending; deploy not done.
