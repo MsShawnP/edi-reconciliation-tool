@@ -27,8 +27,6 @@ from corpus.loader import (
 from parser.x12_parser import parse_document
 from parser.models import X12ParseError
 
-BATCH_SIZE = 200  # DB rows per executemany call
-
 
 def _get_partner_generator(partner: str):
     if partner == "walmart":
@@ -44,7 +42,7 @@ def _get_partner_generator(partner: str):
 
 
 def _stream_load(result, conn, truncate: bool) -> dict[str, int]:
-    """Parse and insert one doc-type at a time, flushing every BATCH_SIZE rows."""
+    """Parse one doc-type at a time, write all rows via execute_values (one round trip)."""
     loaded_at = datetime.now(tz=timezone.utc)
     row_counts: dict[str, int] = {k: 0 for k in _TABLES}
 
@@ -59,7 +57,7 @@ def _stream_load(result, conn, truncate: bool) -> dict[str, int]:
                 if doc_type not in _EXPANDERS:
                     continue
                 expected_cls, expander = _EXPANDERS[doc_type]
-                batch: list = []
+                rows: list = []
 
                 for raw in raw_docs:
                     try:
@@ -69,18 +67,11 @@ def _stream_load(result, conn, truncate: bool) -> dict[str, int]:
                         continue
                     if not isinstance(parsed, expected_cls):
                         continue
-                    batch.extend(expander(parsed, loaded_at))
+                    rows.extend(expander(parsed, loaded_at))
 
-                    if len(batch) >= BATCH_SIZE:
-                        _insert_rows(cur, _TABLES[doc_type], batch)
-                        row_counts[doc_type] += len(batch)
-                        batch.clear()
-
-                if batch:
-                    _insert_rows(cur, _TABLES[doc_type], batch)
-                    row_counts[doc_type] += len(batch)
-
-                if row_counts[doc_type]:
+                if rows:
+                    _insert_rows(cur, _TABLES[doc_type], rows)
+                    row_counts[doc_type] = len(rows)
                     print(f"    {doc_type}: {row_counts[doc_type]} rows", flush=True)
 
     return row_counts

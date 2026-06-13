@@ -314,11 +314,12 @@ def _truncate_tables(cursor) -> None:
 def _insert_rows(cursor, table: str, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
+    from psycopg2.extras import execute_values
     cols = list(rows[0].keys())
     col_list = ", ".join(cols)
-    placeholders = ", ".join(f"%({c})s" for c in cols)
-    sql = f"INSERT INTO {RAW_SCHEMA}.{table} ({col_list}) VALUES ({placeholders})"
-    cursor.executemany(sql, rows)
+    values = [[row[c] for c in cols] for row in rows]
+    sql = f"INSERT INTO {RAW_SCHEMA}.{table} ({col_list}) VALUES %s"
+    execute_values(cursor, sql, values, page_size=500)
 
 
 def load_corpus(result: GenerateResult, truncate: bool = True) -> dict[str, int]:
