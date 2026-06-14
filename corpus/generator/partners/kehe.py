@@ -62,7 +62,7 @@ class KeheGenerator:
                 a_isa = isa.next()
                 a_gs = gs.next()
                 docs["856"].append(_make_856_multi(order, ship1, next_order, ship2, a_isa, a_gs))
-                docs["997"].append(_make_997(_KEHE, _CIN, "SH", a_gs,
+                docs["997"].append(_make_997(_KEHE, _CIN, "SH", a_isa,
                                              isa.next(), gs.next(),
                                              add_days(ship1.ship_date, 1)))
                 inv_date1 = add_days(ship1.ship_date, 1)
@@ -71,7 +71,7 @@ class KeheGenerator:
                 a_isa = isa.next()
                 a_gs = gs.next()
                 docs["856"].append(_make_856_single(order, ship1, a_isa, a_gs))
-                docs["997"].append(_make_997(_KEHE, _CIN, "SH", a_gs,
+                docs["997"].append(_make_997(_KEHE, _CIN, "SH", a_isa,
                                              isa.next(), gs.next(),
                                              add_days(ship1.ship_date, 1)))
                 inv_date1 = add_days(ship1.ship_date, 1)
@@ -86,7 +86,7 @@ class KeheGenerator:
             inv_isa = isa.next()
             inv_gs = gs.next()
             docs["810"].append(_make_810(order, inv_isa, inv_gs, inv_num1, kehe_dist_num1, inv_date1))
-            docs["997"].append(_make_997(_KEHE, _CIN, "IN", inv_gs,
+            docs["997"].append(_make_997(_KEHE, _CIN, "IN", inv_isa,
                                          isa.next(), gs.next(), add_days(inv_date1, 1)))
             pay_date1 = add_days(inv_date1, 30)
             docs["820"].append(_make_820(order, isa.next(), gs.next(), inv_num1, pay_date1))
@@ -104,7 +104,7 @@ class KeheGenerator:
                 _inv_date2 = inv_date2 or add_days(next_order.po_date, 7)
                 docs["810"].append(_make_810(next_order, inv_isa2, inv_gs2,
                                              inv_num2, kehe_dist_num2, _inv_date2))
-                docs["997"].append(_make_997(_KEHE, _CIN, "IN", inv_gs2,
+                docs["997"].append(_make_997(_KEHE, _CIN, "IN", inv_isa2,
                                              isa.next(), gs.next(), add_days(_inv_date2, 1)))
                 pay_date2 = add_days(_inv_date2, 30)
                 docs["820"].append(_make_820(next_order, isa.next(), gs.next(), inv_num2, pay_date2))

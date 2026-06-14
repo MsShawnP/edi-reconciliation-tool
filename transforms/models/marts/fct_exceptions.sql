@@ -36,6 +36,19 @@ match_997 as (
     select * from {{ ref('int_997_match') }}
 ),
 
+-- Pre-aggregate to avoid correlated subqueries that scan raw tables per row
+latest_payment as (
+    select partner_id, rmr_invoice_number, max(payment_date)::date as max_payment_date
+    from {{ ref('stg_820_remittances') }}
+    group by partner_id, rmr_invoice_number
+),
+
+avg_invoice_price as (
+    select partner_id, sku, avg(unit_price) as avg_price
+    from {{ ref('stg_810_invoices') }}
+    group by partner_id, sku
+),
+
 -- ---------------------------------------------------------------------------
 -- ordered_not_asnd: PO line with no ASN
 -- ---------------------------------------------------------------------------
@@ -89,14 +102,13 @@ short_pay as (
         'short_pay'                                 as exception_class,
         abs(f.invoice_vs_paid_delta)                as dollar_impact,
         30                                          as dispute_window_days,
-        -- dispute clock starts from the payment date (820)
-        (select max(payment_date)
-         from {{ ref('stg_820_remittances') }} r
-         where r.partner_id = f.partner_id
-           and r.rmr_invoice_number = f.invoice_number)::date as dispute_date_anchor,
+        lp.max_payment_date                         as dispute_date_anchor,
         f.invoice_number,
         f.match_status
     from four_way f
+    left join latest_payment lp
+        on lp.partner_id         = f.partner_id
+       and lp.rmr_invoice_number = f.invoice_number
     where f.match_status = 'short_pay'
     order by f.partner_id, f.invoice_number, f.sku
 ),
@@ -144,23 +156,21 @@ qty_mismatch as (
 -- ---------------------------------------------------------------------------
 exc_852 as (
     select
-        partner_id,
+        m.partner_id,
         null::text                                  as po_number,
-        sku,
+        m.sku,
         '852_discrepancy'                           as exception_class,
         -- dollar impact approximated using shipped qty × avg 810 unit price
-        abs(delta_qty) * coalesce(
-            (select avg(unit_price)
-             from {{ ref('stg_810_invoices') }} inv
-             where inv.partner_id = match_852.partner_id
-               and inv.sku        = match_852.sku),
-            0)                                      as dollar_impact,
+        abs(m.delta_qty) * coalesce(p.avg_price, 0) as dollar_impact,
         null::integer                               as dispute_window_days,
         null::date                                  as dispute_date_anchor,
         null::text                                  as invoice_number,
         '852_discrepancy'                           as match_status
-    from match_852
-    where has_discrepancy
+    from match_852 m
+    left join avg_invoice_price p
+        on p.partner_id = m.partner_id
+       and p.sku        = m.sku
+    where m.has_discrepancy
 ),
 
 -- ---------------------------------------------------------------------------

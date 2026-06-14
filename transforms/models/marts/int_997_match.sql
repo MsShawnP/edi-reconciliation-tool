@@ -6,12 +6,13 @@
 -- the trading partner responded with a 997 functional acknowledgment within
 -- 48 hours.
 --
--- Join key note: in the synthetic corpus the ISA interchange control number
--- and GS group control number are always equal (one GS group per ISA envelope,
--- counters incremented in lockstep). The join therefore uses:
+-- Join key note: in the synthetic corpus, 997 ACKs store the ISA interchange
+-- control number of the acknowledged document in AK1 element 2 (rather than
+-- the GS group control number per the X12 standard). This avoids storing a
+-- separate gs_control_number column in staging. The join therefore uses:
 --     acknowledged_gs_control = isa_control_number::integer
--- Real-world deployments may need to store gs_control_number in source staging
--- tables if ISA/GS controls diverge (common in batch-envelope EDI traffic).
+-- Real-world deployments must extract and store gs_control_number from staging
+-- tables and join on that instead (ISA and GS controls diverge in batch EDI).
 --
 -- Grain: one row per outbound document (856 or 810 unique by isa_control_number).
 -- A single ISA may carry multiple line items; we de-duplicate to the document level.

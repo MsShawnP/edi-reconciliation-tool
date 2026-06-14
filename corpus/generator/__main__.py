@@ -89,6 +89,8 @@ def main() -> int:
                         help="Discrepancy injection rate (default: 0.3)")
     parser.add_argument("--no-load", action="store_true",
                         help="Skip Postgres load (ledger CSV only)")
+    parser.add_argument("--no-truncate", action="store_true",
+                        help="Append to existing edi_raw tables instead of truncating first")
     parser.add_argument("--partners", default=",".join(sorted(SUPPORTED_PARTNERS)),
                         help="Comma-separated partners to run (default: all)")
     parser.add_argument("--chunk-size", type=int, default=200,
@@ -103,7 +105,7 @@ def main() -> int:
     partners = [p.strip() for p in args.partners.split(",")]
     all_entries = []
     total_rows: dict[str, int] = {}
-    first_chunk = True  # controls truncate — only on the very first DB write
+    first_chunk = not args.no_truncate  # truncate only on first DB write unless --no-truncate
 
     for partner in partners:
         print(f"\n[{partner}] Reading canonical orders...", flush=True)
