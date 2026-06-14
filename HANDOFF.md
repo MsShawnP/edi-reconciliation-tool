@@ -9,6 +9,25 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-13 17:00 — WRAP: 997 ACK fix verified 28/28; finding #16 closed
+
+**Started from:** Auto-continued session — 997 ACK fix coded, corpus + dbt run complete, pytest at 35% when context exhausted.
+
+**Did:**
+- Confirmed background pytest run (bzha218c3) completed 28/28; ran second pass (bomrp4gz7) to double-verify — both exit 0
+- Deleted temp diagnostic files (tmp_check997.py, tmp_dbcheck.py, corpus_reload.log)
+- Committed all prior-session changes: 997 ACK ISA-vs-GS fix across walmart/unfi/kehe generators, fct_exceptions correlated-subquery optimization, --no-truncate flag, int_997_match.sql comment — commit 2e75cf3, pushed
+- Updated docs/finding-16-ledger-mart-divergence.md and PLAN.md to mark #16 RESOLVED (Option A, commits f80c65b/bff1122/11f0cf8) — commit 82904dc, pushed
+
+**State:** 28/28 tests passing. All commits pushed. Finding #16 closed. Working tree clean. make validate end-to-end run still needs live Postgres (one remaining step from #16). DNS for reconcile.lailarallc.com not yet added.
+
+**Next:**
+1. DNS — add A record `reconcile → 66.241.125.182` and AAAA at DNS provider; then `fly certs check reconcile.lailarallc.com --app edi-reconciliation-tool`
+2. `make validate` — run against live Postgres to close the last step of finding #16
+3. Remaining deferred findings: #12 (P2, untested injector types), #17 (P2, $0 on price-less lines), #24 (P2, no agent tool for exception data)
+
+---
+
 ## 2026-06-13 — WRAP: Full corpus loaded into Postgres; dbt transform pending
 
 **Started from:** Six code-review fixes committed (commits e3074c5, 91f5de1 this arc). Corpus load in progress — KeHE and UNFI done, Walmart mid-flight at chunk ~32/51.

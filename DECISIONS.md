@@ -104,12 +104,26 @@ Each entry:
 
 ---
 
+## EDI Document Conventions
+
+### 2026-06-13 — Synthetic corpus stores ISA interchange control in AK1 of 997 ACKs, not GS group control
+- **Why:** ISA counters start at 1001/2001/3001 per partner; GS counters start at 1. The dbt join in `int_997_match.sql` is `isa_control_number::integer = acknowledged_gs_control`. Storing GS control in AK1 means the values are always ~1000 apart and the join produces zero matches. The X12 standard says AK1 should carry GS group control, but our synthetic corpus avoids maintaining a separate `gs_control_number` staging column by storing ISA control instead. The comment in `int_997_match.sql` documents this deviation. Real-world deployments must store and join on GS control.
+- **Scope:** `corpus/generator/partners/walmart.py`, `unfi.py`, `kehe.py`; `transforms/models/marts/int_997_match.sql`
+- **Do not:** Store GS group control in `_make_997()` calls in the synthetic generators — they produce zero 997 matches. Do not remove the comment in `int_997_match.sql` that explains the deviation.
+
+---
+
 ## Corpus Generator Conventions
 
 ### 2026-06-10 — CASE_PACK dict in x12_utils.py is a maintained copy of the FROZEN seed_config.py block
 - **Why:** Generators can't cross-import from cinderhaven-data-platform. The FROZEN block in seed_config is stable by definition (editing it re-baselines the entire portfolio). Copying it into x12_utils.py is safe; drift risk is low. If the FROZEN block ever changes, x12_utils.CASE_PACK must be updated in the same PR.
 - **Scope:** `corpus/generator/x12_utils.py`, all partner generators
 - **Do not:** Import seed_config.py from across repos. Do not derive case_pack_qty from the Postgres schema — it's not guaranteed to be present on all partners' order_lines tables.
+
+### 2026-06-13 — Cascade-aware validation contract (Option A): preserve single-status mart semantics; express expected-surface map in corpus/validate.py
+- **Why:** Finding #16 identified five structural causes of ledger↔mart divergence. Option A keeps the matching engine's single-status CASE semantics (a line failing an earlier check never reaches later checks — this mirrors real four-way match triage and is honest). The expected-surface map in `corpus/validate.py` documents explicitly which ledger classes surface as which mart classes (e.g., shipped_not_invoiced injection beyond tolerance → qty_mismatch in mart; mapping_drift → ordered_not_asnd). Option B (multi-status mart) would double-count dollar impact and require rewriting every mart consumer. Option C (weaker injector) would make the recall claim circular. Option D (document-only) leaves `make validate` broken.
+- **Scope:** `corpus/validate.py`, `corpus/generator/injector.py`, `transforms/models/marts/` (unchanged), dashboard footnotes
+- **Do not:** Replace the CASE precedence in `int_four_way_match.sql` with multi-status rows (Option B) without a new DECISIONS.md entry and a dashboard aggregation rewrite.
 
 ### 2026-06-10 — Generators produce clean documents (empty ledger); Injector owns all discrepancy injection
 - **Why:** Separating generation from injection keeps the generators deterministic and testable in isolation. Structural partner quirks (Walmart CA→EA UoM, UNFI missing PRF on 820, KeHE multi-HL) are built into the generators as realistic document patterns but do NOT themselves write to the ledger. The Injector applies genuine mismatches (off-by-1 quantities, short payments, removed ASNs) and records them. This means the ground truth is entirely controlled by the Injector, not scattered across generators.
