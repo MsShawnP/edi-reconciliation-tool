@@ -45,6 +45,20 @@ quarto" or "scope, scrollytelling, decoration"]
 
 ---
 
+### 2026-06-13 — PowerShell env var syntax silently fails in the Bash tool, causing all tests to skip
+
+**Attempted:** Setting `DATABASE_URL` for pytest using PowerShell syntax inside the Bash tool: `$env:DATABASE_URL="postgresql://..." python -m pytest ...`
+
+**Why it didn't work:** The Bash tool runs bash (POSIX shell), not PowerShell. The `$env:` prefix is PowerShell-specific; bash interprets it as a failed variable expansion and the env var is never set. The test suite treats a missing `DATABASE_URL` as "no DB available" and skips all 28 tests silently — no error, just `28 skipped in 0.06s`. Easy to misread as a successful (empty) run.
+
+**What we tried instead:** Used bash inline env var syntax: `DATABASE_URL="postgresql://..." python -m pytest ...`. All 28 tests ran.
+
+**Status:** Resolved
+
+**Tags:** bash, powershell, env-var, pytest, skip, DATABASE_URL, integration-tests
+
+---
+
 ### 2026-06-11 — `fly postgres attach` fails with superuser auth error on managed clusters
 
 **Attempted:** Running `fly postgres attach cinderhaven-db --app edi-reconciliation-tool` to wire DATABASE_URL automatically.
