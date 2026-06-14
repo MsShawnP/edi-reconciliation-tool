@@ -148,7 +148,7 @@ def _parse_po_from_expected(value: str) -> str | None:
 def validate(
     ledger_entries: list[dict[str, str]],
     mart_rows: list[dict[str, str]],
-    isa_to_po: dict[str, str],
+    isa_to_po: dict[str, set[str]],
 ) -> ValidationResult:
     """Run the full validation contract.
 
@@ -156,7 +156,7 @@ def validate(
         ledger_entries: rows from discrepancy_ledger.csv (dict per row).
         mart_rows: rows from fct_exceptions (dict per row, needs
             partner_id, po_number, exception_class).
-        isa_to_po: ISA control number → po_number lookup (from staging or
+        isa_to_po: ISA control number -> set of po_numbers lookup (from staging or
             int_document_links).
 
     Returns:
@@ -198,38 +198,51 @@ def validate(
         cr = result.class_recall[disc_class]
         cr.total += 1
 
-        # Resolve PO
-        po: str | None = None
-        if disc_class == "ordered-not-asnd":
-            po = _parse_po_from_expected(entry.get("expected_value", ""))
-        elif isa in isa_to_po:
-            po = isa_to_po[isa]
+        # Resolve PO(s).
+        # 997-missing-ack and 852-discrepancy mart rows always have NULL
+        # po_number (document/report-level exceptions, not PO-line-level).
+        # Force partner-level fallback for those classes.
+        # All other classes: one ISA may cover many POs (e.g. one 820 remittance
+        # via invoice_fallback covering many distributor orders), so isa_to_po
+        # returns a set. Check all of them.
+        _PO_SKIP_CLASSES = frozenset({"997-missing-ack", "852-discrepancy"})
+        pos: set[str] = set()
+        if disc_class not in _PO_SKIP_CLASSES:
+            if disc_class == "ordered-not-asnd":
+                single = _parse_po_from_expected(entry.get("expected_value", ""))
+                if single:
+                    pos = {single}
+            elif isa in isa_to_po:
+                pos = isa_to_po[isa]  # already a set
 
         # Expected-invisible with no acceptable classes (uom-mismatch)
         if rule.may_be_invisible and not rule.acceptable:
             cr.invisible += 1
             result.entry_results.append(EntryResult(
                 ledger_class=disc_class, partner=partner,
-                isa_control_number=isa, po_number=po,
+                isa_control_number=isa,
+                po_number=next(iter(pos)) if pos else None,
                 expected_invisible=True,
                 found_mart_classes=frozenset(), passed=True,
             ))
             continue
 
-        # Find matching mart classes for this entry
+        # Find matching mart classes across all POs this ISA resolves to
         found: set[str] = set()
-        if po and po in mart_by_po:
-            found = mart_by_po[po] & rule.acceptable
-        elif not po:
-            # Fallback: partner-level check (852/997 or unresolved PO)
+        for po in pos:
+            if po in mart_by_po:
+                found |= mart_by_po[po] & rule.acceptable
+        if not found and not pos:
+            # Fallback: partner-level check (852/997 or unresolved ISA)
             found = partner_classes & rule.acceptable
 
+        first_po = next(iter(pos)) if pos else None
         if found:
             cr.visible += 1
             cr.hits += 1
             result.entry_results.append(EntryResult(
                 ledger_class=disc_class, partner=partner,
-                isa_control_number=isa, po_number=po,
+                isa_control_number=isa, po_number=first_po,
                 expected_invisible=False,
                 found_mart_classes=frozenset(found), passed=True,
             ))
@@ -238,7 +251,7 @@ def validate(
             cr.invisible += 1
             result.entry_results.append(EntryResult(
                 ledger_class=disc_class, partner=partner,
-                isa_control_number=isa, po_number=po,
+                isa_control_number=isa, po_number=first_po,
                 expected_invisible=True,
                 found_mart_classes=frozenset(), passed=True,
             ))
@@ -248,7 +261,7 @@ def validate(
             result.passed = False
             result.entry_results.append(EntryResult(
                 ledger_class=disc_class, partner=partner,
-                isa_control_number=isa, po_number=po,
+                isa_control_number=isa, po_number=first_po,
                 expected_invisible=False,
                 found_mart_classes=frozenset(), passed=False,
             ))
@@ -263,7 +276,7 @@ def validate(
 def format_report(vr: ValidationResult) -> str:
     lines: list[str] = []
     lines.append("=" * 68)
-    lines.append("  EDI Matching Engine — Validation Report")
+    lines.append("  EDI Matching Engine - Validation Report")
     lines.append("=" * 68)
 
     if vr.unmapped_classes:
@@ -314,9 +327,9 @@ def format_report(vr: ValidationResult) -> str:
     lines.append("")
     lines.append("=" * 68)
     if vr.passed:
-        lines.append("  PASSED — all ledger entries accounted for.")
+        lines.append("  PASSED - all ledger entries accounted for.")
     else:
-        lines.append("  FAILED — see details above.")
+        lines.append("  FAILED - see details above.")
     lines.append("=" * 68)
 
     return "\n".join(lines)
@@ -338,17 +351,23 @@ def _query(conn, sql: str, params=()) -> list[dict]:
         return [dict(row) for row in cur.fetchall()]
 
 
-def _load_isa_to_po(conn, schema: str) -> dict[str, str]:
+def _load_isa_to_po(conn, schema: str) -> dict[str, set[str]]:
+    """Return ISA control -> set of all PO numbers it links to.
+
+    One 820 invoice can cover many POs via invoice_fallback resolution
+    (one consolidated remittance for many distributor orders), so the mapping
+    is one-to-many.
+    """
     rows = _query(conn, f"""
         SELECT document_reference, po_number
         FROM {schema}.int_document_links
         WHERE po_number IS NOT NULL AND po_number != ''
     """)
-    lookup: dict[str, str] = {}
+    lookup: dict[str, set[str]] = {}
     for row in rows:
         isa = str(row["document_reference"]).strip()
-        if isa and isa not in lookup:
-            lookup[isa] = row["po_number"]
+        if isa:
+            lookup.setdefault(isa, set()).add(row["po_number"])
     return lookup
 
 
@@ -389,7 +408,7 @@ def main() -> int:
 
     ledger = _read_ledger(args.ledger)
     if not ledger:
-        print("WARNING: ledger is empty — nothing to validate.")
+        print("WARNING: ledger is empty - nothing to validate.")
         return 0
 
     print(f"  Ledger: {len(ledger)} entries from {args.ledger}")
@@ -402,7 +421,7 @@ def main() -> int:
         conn.close()
 
     print(f"  Mart: {len(mart_rows)} exception rows in {args.schema}.fct_exceptions")
-    print(f"  ISA→PO lookup: {len(isa_to_po)} entries from int_document_links")
+    print(f"  ISA->PO lookup: {len(isa_to_po)} entries from int_document_links")
     print()
 
     vr = validate(ledger, mart_rows, isa_to_po)
