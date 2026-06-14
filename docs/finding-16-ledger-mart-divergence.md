@@ -1,8 +1,9 @@
 # Finding #16 — Ledger vs Mart Divergence: Root Cause and Options
 
-**Status:** RESOLVED 2026-06-13 — Option A implemented (commits f80c65b, bff1122, 11f0cf8, pushed).
+**Status:** FULLY RESOLVED AND VERIFIED 2026-06-14.
 **Option taken:** A — cascade-aware validation contract. Matching engine's single-status semantics preserved; `corpus/validate.py` written with an expected-surface map per ledger class; injector gains one-injection-per-document guard and per-PO removal index. Dashboard footnotes cascade semantics.
-**Remaining step:** `make validate` requires a live Postgres connection to run the end-to-end recall/precision check. The validator logic is unit-tested; the integration run is blocked on DB availability, not on open design questions.
+**Implementation commits:** f80c65b, bff1122, 11f0cf8 (Option A); 1166040 (3 validator bugs fixed during live run — cp1252 stdout encoding, NULL po_number partner-level fallback for missing_997_ack/852_discrepancy, isa_to_po changed to one-to-many for KeHE consolidated 820 remittances).
+**`make validate` result:** PASSES end-to-end against live dbt marts. All 7 ledger classes accounted for (6 at 100% recall; uom-mismatch correctly n/a as expected-invisible). Dollar figures are publishable.
 **Original verdict (decision record):** The divergence was real, had five independent causes, and was worse than the finding suggested: two injection classes could never surface in the mart under their own name, and one could produce zero mart rows at all.
 
 ---

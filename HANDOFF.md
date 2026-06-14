@@ -9,6 +9,16 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-14 — LOG: make validate PASSES; finding #16 fully closed
+
+**What changed:** Ran `make validate` against live dbt marts. Found and fixed 3 validator bugs (cp1252 encoding, NULL po_number partner-level fallback for 997/852, isa_to_po one-to-many for KeHE consolidated remittances). All 7 ledger classes pass: 6 at 100% recall, uom-mismatch correctly n/a. Commit 1166040, pushed. DNS already live (A+AAAA confirmed). Dollar figures publishable.
+
+**State:** Finding #16 fully closed — no remaining steps. All docs updated. Working tree clean.
+
+**Next:** Deferred findings #12 (untested injector types), #17 ($0 price-less lines), #24 (no agent tool). Or call the arc done.
+
+---
+
 ## 2026-06-13 17:00 — WRAP: 997 ACK fix verified 28/28; finding #16 closed
 
 **Started from:** Auto-continued session — 997 ACK fix coded, corpus + dbt run complete, pytest at 35% when context exhausted.
