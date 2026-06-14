@@ -1,7 +1,9 @@
 # Finding #16 — Ledger vs Mart Divergence: Root Cause and Options
 
-**Status:** Investigated 2026-06-12. Structural — needs a direction call before any fix lands.
-**Verdict:** The divergence is real, has five independent causes, and is worse than the finding suggested: two injection classes can **never** surface in the mart under their own name, and one can produce **zero** mart rows at all. Dashboard figures must not be published as authoritative until a direction is chosen and `make validate` exists.
+**Status:** RESOLVED 2026-06-13 — Option A implemented (commits f80c65b, bff1122, 11f0cf8, pushed).
+**Option taken:** A — cascade-aware validation contract. Matching engine's single-status semantics preserved; `corpus/validate.py` written with an expected-surface map per ledger class; injector gains one-injection-per-document guard and per-PO removal index. Dashboard footnotes cascade semantics.
+**Remaining step:** `make validate` requires a live Postgres connection to run the end-to-end recall/precision check. The validator logic is unit-tested; the integration run is blocked on DB availability, not on open design questions.
+**Original verdict (decision record):** The divergence was real, had five independent causes, and was worse than the finding suggested: two injection classes could never surface in the mart under their own name, and one could produce zero mart rows at all.
 
 ---
 
@@ -67,4 +69,4 @@ The dashboard's headline counts and dollar totals key off `exception_class`. Tod
 
 **A**, with the two injector guards folded in. It is the only option that makes the recall claim ("the pipeline proves it catches what it planted") true without weakening the corpus or rewriting the mart. B is defensible later as a v2; C undermines the point of ledger-based validation; D leaves the Makefile broken.
 
-**Stopping here for direction per the work order — no fix applied.**
+**Resolved with Option A — see commits f80c65b, bff1122, 11f0cf8.**
