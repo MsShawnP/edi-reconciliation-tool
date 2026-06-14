@@ -54,7 +54,7 @@ class UnfiGenerator:
                 a_isa = isa.next()
                 a_gs = gs.next()
                 docs["856"].append(_make_856(order, ship, a_isa, a_gs))
-                docs["997"].append(_make_997(_UNFI, _CIN, "SH", a_gs,
+                docs["997"].append(_make_997(_UNFI, _CIN, "SH", a_isa,
                                              isa.next(), gs.next(),
                                              add_days(ship.ship_date, 1)))
                 inv_date = add_days(ship.ship_date, 1)
@@ -70,7 +70,7 @@ class UnfiGenerator:
                 orig_isa = isa.next()
                 orig_gs = gs.next()
                 docs["810"].append(_make_810(order, orig_isa, orig_gs, orig_num, inv_date))
-                docs["997"].append(_make_997(_UNFI, _CIN, "IN", orig_gs,
+                docs["997"].append(_make_997(_UNFI, _CIN, "IN", orig_isa,
                                              isa.next(), gs.next(), add_days(inv_date, 1)))
                 # Credit memo (negative)
                 cr_num = f"{orig_num}-CR"
@@ -82,7 +82,7 @@ class UnfiGenerator:
                 rb_isa = isa.next()
                 rb_gs = gs.next()
                 docs["810"].append(_make_810(order, rb_isa, rb_gs, rb_num, add_days(inv_date, 2)))
-                docs["997"].append(_make_997(_UNFI, _CIN, "IN", rb_gs,
+                docs["997"].append(_make_997(_UNFI, _CIN, "IN", rb_isa,
                                              isa.next(), gs.next(), add_days(inv_date, 3)))
                 inv_num = rb_num
             else:
@@ -90,7 +90,7 @@ class UnfiGenerator:
                 inv_isa = isa.next()
                 inv_gs = gs.next()
                 docs["810"].append(_make_810(order, inv_isa, inv_gs, inv_num, inv_date))
-                docs["997"].append(_make_997(_UNFI, _CIN, "IN", inv_gs,
+                docs["997"].append(_make_997(_UNFI, _CIN, "IN", inv_isa,
                                              isa.next(), gs.next(), add_days(inv_date, 1)))
 
             # 820 — every 3rd omits PO reference (key resolution fallback scenario)

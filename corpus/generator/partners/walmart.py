@@ -64,7 +64,7 @@ class WalmartGenerator:
                     a_isa = isa.next()
                     a_gs = gs.next()
                     docs["856"].append(_make_856(order, ship, qty, a_isa, a_gs))
-                    docs["997"].append(_make_997(_WMT, _CIN, "SH", a_gs,
+                    docs["997"].append(_make_997(_WMT, _CIN, "SH", a_isa,
                                                  isa.next(), gs.next(),
                                                  add_days(ship.ship_date, 1)))
                 inv_date = add_days(shipments[0].ship_date, 1)
@@ -73,7 +73,7 @@ class WalmartGenerator:
                     a_isa = isa.next()
                     a_gs = gs.next()
                     docs["856"].append(_make_856(order, ship, ship.units_shipped, a_isa, a_gs))
-                    docs["997"].append(_make_997(_WMT, _CIN, "SH", a_gs,
+                    docs["997"].append(_make_997(_WMT, _CIN, "SH", a_isa,
                                                  isa.next(), gs.next(),
                                                  add_days(ship.ship_date, 1)))
                 inv_date = add_days(shipments[0].ship_date, 1)
@@ -81,11 +81,13 @@ class WalmartGenerator:
                 inv_date = add_days(order.po_date, 7)
 
             # 810 — Cinderhaven invoices Walmart in EACHES (structural UoM quirk)
-            inv_num = f"WMT-INV-{isa.next():06d}"
+            # Derive invoice number from PO number (stable across chunks; isa counter resets
+            # per generate() call, so sequential counters repeat when processing in chunks).
+            inv_num = f"WMT-INV-{order.po_number.split('-')[-1]}"
             inv_isa = isa.next()
             inv_gs = gs.next()
             docs["810"].append(_make_810_eaches(order, inv_isa, inv_gs, inv_num, inv_date))
-            docs["997"].append(_make_997(_WMT, _CIN, "IN", inv_gs,
+            docs["997"].append(_make_997(_WMT, _CIN, "IN", inv_isa,
                                          isa.next(), gs.next(),
                                          add_days(inv_date, 1)))
 
