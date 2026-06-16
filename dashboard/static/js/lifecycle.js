@@ -48,9 +48,22 @@
     { key: "paid",     label: "PAID",     color: C.rose   },
   ];
 
+  function fmtCompact(n) {
+    var abs = Math.abs(n);
+    if (abs >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (abs >= 10000) return (n / 1e3).toFixed(1) + "K";
+    return n.toLocaleString();
+  }
+
+  function fontSizeForValue(n) {
+    if (Math.abs(n) >= 1e6) return "36px";
+    if (Math.abs(n) >= 10000) return "40px";
+    return "48px";
+  }
+
   function fmtDelta(a, b) {
     var d = b - a;
-    return (d >= 0 ? "+" : "−") + Math.abs(d).toLocaleString() + " cases";
+    return (d >= 0 ? "+" : "−") + fmtCompact(Math.abs(d)) + " cases";
   }
 
   function calloutStyle(a, b) {
@@ -129,14 +142,15 @@
         .text(stage.label);
 
       // Main quantity number
+      var val = data[stage.key];
       svg.append("text")
         .attr("x", cx).attr("y", BOX_TOP + 88)
         .attr("text-anchor", "middle")
         .style("font-family", C.serif)
-        .style("font-size", "48px")
+        .style("font-size", fontSizeForValue(val))
         .style("font-weight", "700")
         .style("fill", stage.color)
-        .text(data[stage.key].toLocaleString());
+        .text(fmtCompact(val));
 
       // "cases" unit
       svg.append("text")
