@@ -34,6 +34,8 @@ _CLASS_LABELS = {
     "missing_997_ack":       "Missing 997 ACK",
 }
 
+_NO_DISPUTE_CLOCK = frozenset({"852_discrepancy", "missing_997_ack"})
+
 
 def _fmt_dollar(amount: float | None) -> str:
     if amount is None:
@@ -75,6 +77,7 @@ def get_exception_summary() -> list[dict[str, Any]]:
                     "exception_count": int(row["exception_count"]),
                     "any_urgent": bool(row["any_urgent"]),
                     "ops_only": False,
+                    "no_dispute_clock": cls in _NO_DISPUTE_CLOCK,
                 })
             else:
                 result.append({
@@ -85,6 +88,7 @@ def get_exception_summary() -> list[dict[str, Any]]:
                     "exception_count": 0,
                     "any_urgent": False,
                     "ops_only": False,
+                    "no_dispute_clock": cls in _NO_DISPUTE_CLOCK,
                 })
         if "missing_997_ack" in seen:
             row = next(r for r in rows if r["exception_class"] == "missing_997_ack")
