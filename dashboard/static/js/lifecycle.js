@@ -62,7 +62,7 @@
   function calloutDesc(i, data) {
     if (i === 0) return ["not shipped", "OTIF exposure"];
     if (i === 1) return data.invoiced > data.shipped
-      ? ["invoiced, not in ASN", "unbilled risk"]
+      ? ["invoiced without ASN", "chargeback exposure"]
       : ["ASN qty > invoice qty", "shipped-not-invoiced"];
     return ["short-paid on remittance", "30-day dispute window"];
   }
