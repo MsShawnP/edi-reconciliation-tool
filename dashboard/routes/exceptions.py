@@ -48,7 +48,7 @@ def _fmt_dollar(amount: float | None) -> str:
 
 
 def get_exception_summary() -> list[dict[str, Any]]:
-    """Summary card data: one dict per revenue-affecting exception class."""
+    """Summary card data: revenue classes first, then ops (missing_997_ack)."""
     if not db.is_configured():
         return []
     try:
@@ -59,7 +59,6 @@ def get_exception_summary() -> list[dict[str, Any]]:
                 coalesce(sum(dollar_impact), 0) as total_dollar_impact,
                 bool_or(dispute_urgent) as any_urgent
             from {_SCHEMA}.fct_exceptions
-            where exception_class != 'missing_997_ack'
             group by exception_class
             order by total_dollar_impact desc
         """)
@@ -75,6 +74,7 @@ def get_exception_summary() -> list[dict[str, Any]]:
                     "total_fmt": _fmt_dollar(float(row["total_dollar_impact"])),
                     "exception_count": int(row["exception_count"]),
                     "any_urgent": bool(row["any_urgent"]),
+                    "ops_only": False,
                 })
             else:
                 result.append({
@@ -84,7 +84,19 @@ def get_exception_summary() -> list[dict[str, Any]]:
                     "total_fmt": "$0",
                     "exception_count": 0,
                     "any_urgent": False,
+                    "ops_only": False,
                 })
+        if "missing_997_ack" in seen:
+            row = next(r for r in rows if r["exception_class"] == "missing_997_ack")
+            result.append({
+                "exception_class": "missing_997_ack",
+                "label": _CLASS_LABELS["missing_997_ack"],
+                "total_dollar_impact": 0.0,
+                "total_fmt": "$0",
+                "exception_count": int(row["exception_count"]),
+                "any_urgent": False,
+                "ops_only": True,
+            })
         return result
     except Exception:
         logger.exception("get_exception_summary query failed")

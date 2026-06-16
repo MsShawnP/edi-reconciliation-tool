@@ -28,12 +28,12 @@
   {% if summary %}
   <div class="cards-grid">
     {% for card in summary %}
-    <div class="exception-card {{ 'exception-card--urgent' if card.any_urgent else '' }}">
-      <div class="exception-card__class">{{ card.label }}</div>
+    <div class="exception-card {{ 'exception-card--urgent' if card.any_urgent else '' }} {{ 'exception-card--ops' if card.ops_only else '' }}">
+      <div class="exception-card__class">{{ card.label }}{% if card.ops_only %} <span class="ops-tag">OPS</span>{% endif %}</div>
       <div class="exception-card__amount {{ 'exception-card__amount--zero' if card.total_dollar_impact == 0 else '' }}">
-        {{ card.total_fmt }}
+        {% if card.ops_only %}{{ card.exception_count | default(0) }}{% else %}{{ card.total_fmt }}{% endif %}
       </div>
-      <div class="exception-card__count">{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}</div>
+      <div class="exception-card__count">{% if card.ops_only %}unacknowledged transmissions{% else %}{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}{% endif %}</div>
       {% if card.any_urgent %}
       <span class="urgent-badge" style="margin-top:8px;display:inline-block;">Dispute expiring</span>
       {% endif %}
