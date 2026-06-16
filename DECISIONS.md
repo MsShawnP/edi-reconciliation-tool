@@ -155,6 +155,15 @@ Each entry:
 
 ---
 
+## Dashboard Conventions
+
+### 2026-06-16 — Two-layer sanity guard for lifecycle visual: server-side dollar cap + client-side validation fallback
+- **Why:** The 820 corpus generator inflates PAID because RMR segments are at line-item grain (documented in `docs/finding-820-rmr-grain.md`). Rather than wait for the generator fix, the dashboard defends itself: (1) `lifecycle.py` caps `total_paid_dollars` at `total_invoiced_dollars` before computing case-equiv, and (2) `lifecycle.js` runs `isValid()` — if PAID > INVOICED after server processing, falls back to canonical data with `source: "validation-fallback"` subtitle. This pattern is correct even after the generator is fixed — PAID > INVOICED is structurally impossible in a real four-way match, so the guard catches any future data issue.
+- **Scope:** `dashboard/routes/lifecycle.py`, `dashboard/static/js/lifecycle.js`
+- **Do not:** Remove the server-side cap or client-side guard after fixing the 820 generator — they protect against any future data integrity issue, not just this one bug.
+
+---
+
 ## Reversed / Superseded
 
 When a decision is overturned:

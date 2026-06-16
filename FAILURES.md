@@ -84,3 +84,31 @@ quarto" or "scope, scrollytelling, decoration"]
 **Status:** Resolved
 
 **Tags:** starlette, jinja2, fastapi, templating, api-break, upgrade, lru-cache, TypeError
+
+---
+
+### 2026-06-16 — PowerShell splits `fly ssh console -C` arguments at internal quotes
+
+**Attempted:** Running `fly ssh console -C "python -c '...'"` via the PowerShell tool to query the Fly.io database.
+
+**Why it didn't work:** PowerShell re-parses the `-C` argument at internal quote boundaries, splitting a single string into multiple arguments. `fly ssh console` then errors with "accepts at most 1 arg(s)". This is a PowerShell-specific quoting issue — bash passes the entire string as one argument.
+
+**What we tried instead:** Switched to the Bash tool for all `fly ssh console` commands. Bash handles the nested quoting correctly.
+
+**Status:** Resolved
+
+**Tags:** fly.io, ssh, powershell, quoting, bash, windows
+
+---
+
+### 2026-06-16 — Assumed lifecycle PAID > INVOICED was caused by duplicate data loads; actual cause was 820 RMR grain
+
+**Attempted:** Hypothesized that the PAID inflation was from running the corpus loader multiple times without truncating, resulting in duplicate raw rows.
+
+**Why it didn't work:** Raw table row counts were reasonable (86K rows, avg 101 qty/line = 8.7M cases). The data was not duplicated. The actual cause was the 820 corpus generator emitting one RMR segment per PO line item instead of one per invoice. The `payment_agg` CTE in `int_four_way_match.sql` sums all RMR amounts per invoice, so 18 line-item RMRs inflated the total 18x.
+
+**What we tried instead:** Progressive database investigation — checked raw counts (fine), mart totals (fine), dollar totals (PAID 2.5x INVOICED), then drilled into per-invoice RMR rows to find the grain mismatch. Added a server-side cap and client-side guard while documenting the generator bug for a future fix.
+
+**Status:** Resolved (mitigated; upstream generator fix tracked in docs/finding-820-rmr-grain.md)
+
+**Tags:** 820, RMR, grain, lifecycle, debugging, hypothesis, corpus-generator, int_four_way_match
