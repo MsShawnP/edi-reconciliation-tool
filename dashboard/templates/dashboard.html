@@ -36,6 +36,8 @@
       <div class="exception-card__count">{% if card.ops_only %}unacknowledged transmissions{% else %}{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}{% endif %}</div>
       {% if card.any_urgent %}
       <span class="urgent-badge" style="margin-top:8px;display:inline-block;">Dispute expiring</span>
+      {% elif card.no_dispute_clock and not card.ops_only %}
+      <span class="no-dispute-tag" style="margin-top:8px;display:inline-block;">No dispute clock</span>
       {% endif %}
     </div>
     {% endfor %}
