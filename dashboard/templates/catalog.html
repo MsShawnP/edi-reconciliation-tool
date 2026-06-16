@@ -18,7 +18,7 @@
   <h2 class="section-title">Revenue-Affecting Exceptions</h2>
 
   {% for p in patterns if p.tier == 'revenue' %}
-  <div class="pattern-card">
+  <div class="pattern-card" id="{{ p.key }}">
 
     <div class="pattern-card__header">
       <div>

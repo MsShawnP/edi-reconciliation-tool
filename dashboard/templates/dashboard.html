@@ -33,7 +33,13 @@
       <div class="exception-card__amount {{ 'exception-card__amount--zero' if card.total_dollar_impact == 0 else '' }}">
         {% if card.ops_only %}{{ card.exception_count | default(0) }}{% else %}{{ card.total_fmt }}{% endif %}
       </div>
-      <div class="exception-card__count">{% if card.ops_only %}unacknowledged transmissions{% else %}{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}{% endif %}</div>
+      <div class="exception-card__count">
+        {% if card.ops_only %}unacknowledged transmissions
+        {% elif card.exception_class == 'uom_mismatch' and card.exception_count == 0 %}not detectable at invoice level — <a href="/catalog#uom_mismatch" style="color:var(--navy);">see methodology</a>
+        {% elif card.exception_class == '852_discrepancy' %}<span title="Sell-through velocity across all SKU/weeks vs. per-PO dollar delta — different grain than other cards.">{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}</span>
+        {% else %}{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}
+        {% endif %}
+      </div>
       {% if card.any_urgent %}
       <span class="urgent-badge" style="margin-top:8px;display:inline-block;">Dispute expiring</span>
       {% elif card.no_dispute_clock and not card.ops_only %}
