@@ -255,6 +255,28 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
   color: var(--text-secondary);
 }
 
+.exception-card--ops {
+  border-left: 3px solid var(--navy);
+  background: var(--navy-surface, #e5e8f5);
+}
+
+.exception-card--ops .exception-card__amount {
+  color: var(--navy);
+}
+
+.ops-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--navy);
+  background: var(--navy-surface, #e5e8f5);
+  border: 1px solid var(--navy);
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 /* --------------------------------------------------------------------------
  * Filter bar
  * -------------------------------------------------------------------------- */
