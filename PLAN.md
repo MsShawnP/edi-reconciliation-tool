@@ -90,17 +90,17 @@ the active plan.
 ## Deferred code-review findings
 
 From the /ce:code-review pass (2026-06-11). These were triaged out of the immediate fix wave.
-Fixed items (#4, #5, #23, #22, #11, #15) are committed; these stay open.
+Fixed items (#4, #5, #23, #22, #11, #15) are committed; #12, #16, #17, #24 cleared. Remaining open: #14, #18, #19 (all P2–P3, low priority).
 
 | # | Severity | Finding | Files | Notes |
 |---|---|---|---|---|
-| #12 | P2 | Untested injector types — mapping-drift and 997-missing-ack are injected but have no integration test verifying they appear in the exception mart | `corpus/generator/injector.py`, `tests/test_matching.py` | Low risk; corpus generation is correct; tests would catch regressions |
+| #12 | ~~P2~~ | ~~Untested injector types~~ | — | **Cleared 2026-06-16.** `make validate` proves 100% recall on all 6 visible ledger classes against live marts — mapping-drift and 997-missing-ack are both validated end-to-end. |
 | #14 | P2 | Conditional assertion in `test_walmart_uom_normalization` — the assertion (`matched >= 1`) holds only if the injection rate leaves some clean Walmart orders; could become vacuous after injection-rate changes | `tests/test_matching.py:155` | Monitor if injection rate is raised above ~0.5 |
 | #16 | ~~P1~~ | ~~Double-injection divergence~~ | — | **FULLY RESOLVED AND VERIFIED 2026-06-14.** Option A implemented (f80c65b/bff1122/11f0cf8); `make validate` PASSES end-to-end (1166040 — 3 validator bugs fixed during live run). 100% recall on all 6 visible ledger classes. Dollar figures publishable. See `docs/finding-16-ledger-mart-divergence.md`. |
-| #17 | P2 | $0 dollar impact on price-less PO1 lines — if a 850 PO1 segment omits unit_price, ordered_not_asnd and similar exceptions show $0 impact | `transforms/models/marts/fct_exceptions.sql` | The eventual fix is labeling ("impact unpriced"), never imputing a number |
+| #17 | ~~P2~~ | ~~$0 dollar impact on price-less PO1 lines~~ | — | **Cleared 2026-06-16.** Synthetic corpus does not generate price-less PO1 lines; issue is theoretical for real-data engagements only. |
 | #18 | P3 | Duplicate `_read_*_orders` helpers across partner generator modules | `corpus/generator/walmart.py`, `corpus/generator/unfi.py`, `corpus/generator/kehe.py` | Pure maintainability; no correctness issue |
 | #19 | P3 | Duplicate `_connect()` helper in `tests/test_matching.py` — identical to the module-level helper | `tests/test_matching.py` | Remove the duplicate before the test file grows further |
-| #24 | P2 | Agent-native parity gaps — no agent-callable tool surfaces exception data; dashboard is UI-only | `dashboard/routes/exceptions.py`, `dashboard/app.py` | Required if this tool is ever embedded in an AI workflow |
+| #24 | ~~P2~~ | ~~Agent-native parity gaps~~ | — | **Cleared 2026-06-16.** Out of scope for v1 portfolio piece. Agent tool layer belongs in a paid engagement, not the demo. |
 
 ---
 
