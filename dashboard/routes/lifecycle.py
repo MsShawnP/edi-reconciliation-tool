@@ -20,13 +20,28 @@ def get_lifecycle_stats() -> dict[str, Any] | None:
         return None
     try:
         rows = db.query(f"""
-            select
-                coalesce(sum(ordered_qty),             0) as total_ordered,
-                coalesce(sum(shipped_qty_normalized),  0) as total_shipped,
-                coalesce(sum(invoiced_qty_normalized), 0) as total_invoiced,
-                coalesce(sum(invoice_amount),          0) as total_invoiced_dollars,
-                coalesce(sum(paid_amount),             0) as total_paid_dollars
-            from {_SCHEMA}.int_four_way_match
+            with
+            qty_totals as (
+                select
+                    coalesce(sum(ordered_qty),             0) as total_ordered,
+                    coalesce(sum(shipped_qty_normalized),  0) as total_shipped,
+                    coalesce(sum(invoiced_qty_normalized), 0) as total_invoiced
+                from {_SCHEMA}.int_four_way_match
+            ),
+            dollar_totals as (
+                select
+                    coalesce(sum(invoice_amount), 0) as total_invoiced_dollars,
+                    coalesce(sum(paid_amount),    0) as total_paid_dollars
+                from (
+                    select distinct on (partner_id, invoice_number)
+                        invoice_amount, paid_amount
+                    from {_SCHEMA}.int_four_way_match
+                    where invoice_number is not null
+                ) deduped
+            )
+            select q.*, d.*
+            from qty_totals q
+            cross join dollar_totals d
         """)
         if not rows:
             return None
