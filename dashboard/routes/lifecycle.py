@@ -51,9 +51,16 @@ def get_lifecycle_stats() -> dict[str, Any] | None:
         total_shipped          = float(r["total_shipped"])
         total_invoiced         = float(r["total_invoiced"])
         total_invoiced_dollars = float(r["total_invoiced_dollars"])
-        total_paid_dollars     = float(r["total_paid_dollars"])
+        total_paid_dollars_raw = float(r["total_paid_dollars"])
 
-        # Estimate cases-equivalent paid from dollar amounts
+        # Cap paid at invoiced: PAID > INVOICED is structurally impossible
+        # (you cannot pay more than you billed).  The synthetic 820 corpus
+        # inflates paid_amount because RMR segments are per-line-item, not
+        # per-invoice — payment_agg sums them, producing totals that exceed
+        # the invoice document total.  Capping here is correct for any
+        # dataset; the upstream generator bug is tracked separately.
+        total_paid_dollars = min(total_paid_dollars_raw, total_invoiced_dollars)
+
         avg_unit_price = (
             total_invoiced_dollars / total_invoiced if total_invoiced > 0 else 0
         )
@@ -65,14 +72,24 @@ def get_lifecycle_stats() -> dict[str, Any] | None:
         invoiced_excess = max(0, total_invoiced - total_shipped)
         short_pay_dlrs  = max(0, total_invoiced_dollars - total_paid_dollars)
 
+        ordered  = int(round(total_ordered))
+        shipped  = int(round(total_shipped))
+        invoiced = int(round(total_invoiced))
+        paid     = int(round(cases_paid_equiv))
+
+        # Server-side sanity: PAID must not exceed INVOICED in case-equiv
+        if paid > invoiced:
+            paid = invoiced
+
         return {
-            "ordered":           int(round(total_ordered)),
-            "shipped":           int(round(total_shipped)),
-            "invoiced":          int(round(total_invoiced)),
-            "paid":              int(round(cases_paid_equiv)),
+            "ordered":           ordered,
+            "shipped":           shipped,
+            "invoiced":          invoiced,
+            "paid":              paid,
             "shipped_short":     int(round(shipped_short)),
             "invoiced_excess":   int(round(invoiced_excess)),
             "short_pay_dollars": round(short_pay_dlrs, 2),
+            "source":            "live",
         }
     except Exception:
         logger.exception("get_lifecycle_stats query failed")

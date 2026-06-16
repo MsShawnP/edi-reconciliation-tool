@@ -115,7 +115,9 @@
       .style("fill", C.sub)
       .text(data.source === "live"
         ? "Live from exception mart (edi_marts.int_four_way_match)"
-        : "Canonical example — connect to Postgres and run dbt for live numbers");
+        : data.source === "validation-fallback"
+          ? "Canonical example — live data failed validation (PAID > INVOICED)"
+          : "Canonical example — connect to Postgres and run dbt for live numbers");
 
     // Stage boxes
     STAGES.forEach(function (stage, i) {
@@ -244,14 +246,24 @@
       .text("Synthetic corpus — Walmart · UNFI · KeHE. UoM normalized to cases before comparison.");
   }
 
-  // Read server-injected data; fall back to canonical
+  function isValid(d) {
+    if (!d || d.ordered <= 0) return false;
+    if (d.paid > d.invoiced) return false;
+    return true;
+  }
+
+  // Read server-injected data; fall back to canonical if missing or invalid
   var el = document.getElementById("lifecycle-data");
   var serverData = null;
   try { serverData = el ? JSON.parse(el.textContent) : null; } catch (_) {}
 
-  var data = (serverData && serverData.ordered > 0)
-    ? serverData
-    : CANONICAL;
+  var data;
+  if (serverData && isValid(serverData)) {
+    data = serverData;
+  } else {
+    data = CANONICAL;
+    if (serverData && !isValid(serverData)) data.source = "validation-fallback";
+  }
 
   // Render immediately (data is already available inline)
   if (document.readyState === "loading") {
