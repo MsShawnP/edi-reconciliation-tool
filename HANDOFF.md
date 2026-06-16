@@ -9,6 +9,23 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-16 — WRAP: All 8 UI issues resolved; 820 generator bug documented
+
+**Started from:** All 9 units shipped. `make validate` passing. 8-issue UI work order in progress — #1–6 and #8 done in prior sessions.
+
+**Did:**
+- Investigated #7 (lifecycle PAID > INVOICED) via fly SSH database queries — root cause was 820 generator emitting RMR at line-item grain, not duplicate data
+- Added two-layer fix: server-side dollar cap in lifecycle.py + client-side sanity guard in lifecycle.js
+- Confirmed #5 (852 tooltip) already done
+- Created docs/finding-820-rmr-grain.md
+- Deployed and verified on Fly.io
+
+**State:** All 8 UI issues resolved and deployed. Working tree clean. 820 generator bug documented but not fixed — lifecycle cap masks it. All commits pushed.
+
+**Next:** (1) Fix 820 generator (RMR to invoice grain, reload, verify lifecycle without cap binding), (2) deferred findings #14/#18/#19, or (3) call the arc done.
+
+---
+
 ## 2026-06-14 — LOG: make validate PASSES; finding #16 fully closed
 
 **What changed:** Ran `make validate` against live dbt marts. Found and fixed 3 validator bugs (cp1252 encoding, NULL po_number partner-level fallback for 997/852, isa_to_po one-to-many for KeHE consolidated remittances). All 7 ledger classes pass: 6 at 100% recall, uom-mismatch correctly n/a. Commit 1166040, pushed. DNS already live (A+AAAA confirmed). Dollar figures publishable.
