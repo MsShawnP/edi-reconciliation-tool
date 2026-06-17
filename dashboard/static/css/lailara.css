@@ -957,3 +957,13 @@ tbody td {
   color: var(--text-primary);
   white-space: pre;
 }
+
+.pattern-card__drilldown {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.catalog-drilldown-body {
+  margin-top: 12px;
+}

@@ -171,6 +171,38 @@ async def catalog_page(request: Request):
 # API: lifecycle numbers for the D3 visual (JSON endpoint)
 # ---------------------------------------------------------------------------
 
+@app.get("/api/catalog/drilldown")
+async def api_catalog_drilldown(
+    exception_class: str = Query(default="", alias="class"),
+    limit: int = Query(default=100),
+) -> JSONResponse:
+    """Return exception rows for a specific failure pattern class."""
+    if not exception_class or not db.is_configured():
+        return JSONResponse([])
+    from dashboard.routes.exceptions import _CLASS_LABELS
+    try:
+        rows = db.query(f"""
+            select
+                partner_id, exception_class, po_number, sku,
+                invoice_number, dollar_impact,
+                dispute_window_days, dispute_window_expires_at, dispute_urgent
+            from {db.MARTS_SCHEMA}.fct_exceptions
+            where exception_class = %s
+            order by dollar_impact desc nulls last
+            limit %s
+        """, (exception_class, limit))
+        for row in rows:
+            row["dollar_fmt"] = _fmt_dollar(float(row["dollar_impact"] or 0))
+            row["class_label"] = _CLASS_LABELS.get(
+                row["exception_class"], row["exception_class"]
+            )
+            if row["dispute_window_expires_at"]:
+                row["dispute_window_expires_at"] = str(row["dispute_window_expires_at"])
+        return JSONResponse(rows)
+    except Exception:
+        return JSONResponse([])
+
+
 @app.get("/api/lifecycle")
 async def api_lifecycle(partner: str = Query(default="")) -> JSONResponse:
     stats = get_lifecycle_stats(partner=partner)
