@@ -101,6 +101,20 @@ quarto" or "scope, scrollytelling, decoration"]
 
 ---
 
+### 2026-06-16 — fly ssh console fails when app VMs are stopped (auto-start)
+
+**Attempted:** Running `fly ssh console -a edi-reconciliation-tool -C "python -c ..."` to query the database from the app container.
+
+**Why it didn't work:** App machines were in stopped state (Fly auto-start/auto-stop). `fly ssh console` requires a running VM to connect to. Error: "app edi-reconciliation-tool has no started VMs."
+
+**What we tried instead:** Used `fly proxy 5433:5432 -a cinderhaven-db` to tunnel directly to the Postgres cluster, then ran diagnostic queries locally via psycopg2. This bypasses the app entirely and works regardless of app machine state.
+
+**Status:** Resolved
+
+**Tags:** fly.io, ssh, proxy, auto-start, database, debugging
+
+---
+
 ### 2026-06-16 — Assumed lifecycle PAID > INVOICED was caused by duplicate data loads; actual cause was 820 RMR grain
 
 **Attempted:** Hypothesized that the PAID inflation was from running the corpus loader multiple times without truncating, resulting in duplicate raw rows.

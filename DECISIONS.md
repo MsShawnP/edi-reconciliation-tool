@@ -155,6 +155,13 @@ Each entry:
 
 ---
 
+### 2026-06-16 — No pricing text in any web-served file
+- **Why:** `dashboard/static/po_lifecycle.svg` contained "$18K–$30K engagement for specialty food brands" and was publicly accessible at `/static/po_lifecycle.svg`. Pricing is private-only — it belongs in internal briefs, not on the live site. Found and removed during round 2 review.
+- **Scope:** All files under `dashboard/static/`, `dashboard/templates/`, and any other directory served by FastAPI
+- **Do not:** Put engagement pricing, rate cards, or fee ranges in any file that the web server can serve. Keep pricing in project briefs and planning docs only.
+
+---
+
 ## Dashboard Conventions
 
 ### 2026-06-16 — Two-layer sanity guard for lifecycle visual: server-side dollar cap + client-side validation fallback

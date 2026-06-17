@@ -9,6 +9,27 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-16 — WRAP: Round 2 fixes (#9/#10/#11); 852 math root-caused
+
+**Started from:** All 9 units shipped, 8 UI issues resolved. User screenshot showed $99.3M 852 sell-through and no date range context.
+
+**Did:**
+- Diagnosed 852 inflation via Fly proxy DB queries: ISA counter resets per chunk → report_id collisions → Cartesian product in int_852_match LEFT JOIN (36K raw → 94K rows). Overlapping 7-day periods also inflate shipped_qty 3x.
+- Fix #10: removed SVG export section, /visuals mount, SVG file, 4 tests
+- Fix #11: removed dashboard/static/po_lifecycle.svg with "$18K–$30K" pricing text
+- Fix #9: added corpus date range ("Jan 2023 – Feb 2026") to dashboard header
+- All pushed to origin
+
+**State:** 11 tests passing. Three UI fixes deployed. 852 math issue fully diagnosed but NOT yet fixed in SQL — live dashboard still shows $99.3M. The fix is SQL-only (no corpus reload needed).
+
+**Next:** Fix 852 math — three options:
+1. Quick: add period_start/period_end to int_852_match LEFT JOIN (cuts 94K → 36K rows)
+2. Better: rewrite int_852_match to (partner_id, sku) grain — eliminates all three causes
+3. Full: also fix ISA counter in generators to prevent report_id collisions on future loads
+After SQL fix: `dbt run` via proxy, verify dashboard numbers. No corpus reload needed.
+
+---
+
 ## 2026-06-16 — WRAP: All 8 UI issues resolved; 820 generator bug documented
 
 **Started from:** All 9 units shipped. `make validate` passing. 8-issue UI work order in progress — #1–6 and #8 done in prior sessions.
