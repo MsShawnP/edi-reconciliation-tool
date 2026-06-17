@@ -58,12 +58,10 @@ models:
 
   - name: int_852_match
     description: >
-      852 sell-through reconciliation. Compares distributor-reported sell-through
-      against shipped quantity by partner/SKU/period.
+      852 sell-through reconciliation. Compares total distributor-reported
+      sell-through against total shipped quantity by partner and SKU.
     columns:
       - name: partner_id
-        tests: [not_null]
-      - name: report_id
         tests: [not_null]
       - name: sku
         tests: [not_null]
