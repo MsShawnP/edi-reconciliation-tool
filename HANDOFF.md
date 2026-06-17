@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-17 00:03 — LOG: 852 math fixed — int_852_match rewritten to (partner_id, sku) grain
+
+**What changed:** Rewrote `int_852_match` from per-report-per-period grain to `(partner_id, sku)` grain. 852 exceptions dropped from 87,897 rows / $99.3M to 100 rows / $1.75M. dbt run completed against live Fly Postgres; dashboard data corrected. Commit 881ff4b, pushed.
+
+**Why:** ISA counter resets across generator chunks created `report_id` collisions, causing a Cartesian product in the LEFT JOIN. Overlapping 7-day periods further inflated shipped_qty. Aggregating to partner/SKU eliminates all three inflation causes without touching generators or reloading the corpus.
+
+**State:** Live database updated. 97 tests pass, 3 pre-existing failures in test_validate.py (unrelated PO-matching logic), 31 skipped. Dashboard should show $1.75M 852 sell-through. No app redeployment needed — data-only fix.
+
+**Next:** Verify live dashboard at reconcile.lailarallc.com shows corrected numbers. Then: deferred findings #14/#18/#19 (all P2–P3), or `/improve` / dep audit, or call the arc done.
+
+---
+
 ## 2026-06-16 — WRAP: Round 2 fixes (#9/#10/#11); 852 math root-caused
 
 **Started from:** All 9 units shipped, 8 UI issues resolved. User screenshot showed $99.3M 852 sell-through and no date range context.
