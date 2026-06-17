@@ -9,6 +9,23 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-17 04:00 — WRAP: Short-pay pill fix, catalog filters, dispute status badges
+
+**Started from:** Dashboard live with 5 features shipped. User reported short-pay pill showing "+0 cases" despite real short-pay orders existing in the drill-down.
+
+**Did:**
+- Fixed lifecycle short-pay pill: now displays `short_pay_dollars` as a dollar amount instead of computing a case delta that rounds to zero
+- Added partner filter + date range picker to Failure Pattern Catalog page
+- Added dispute status indicators: `.expired-badge` (struck-through red date) for past-due windows, summary bar showing disputable vs expired counts
+- Applied expired-badge to lifecycle drilldown table for consistency
+- Deployed all changes to Fly.io (4 machines, health checks passing)
+
+**State:** All changes deployed and live at reconcile.lailarallc.com. 84 tests pass, 31 skipped (DB), 1 pre-existing failure in test_validate.py. Working tree clean after commit.
+
+**Next:** Verify the three changes on the live site (short-pay pill on lifecycle, catalog filters, expired badges). Then: remaining deferred findings #14/#18/#19 (all P2–P3), or `/improve`, or call the arc done.
+
+---
+
 ## 2026-06-17 03:15 — WRAP: Five-feature dashboard upgrade deployed
 
 **Started from:** All 9 units shipped, 852 math fixed. 97 tests passing, 3 pre-existing failures in test_validate.py.

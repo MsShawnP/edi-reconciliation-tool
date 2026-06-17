@@ -14,7 +14,11 @@
 (function () {
   "use strict";
 
-  var CANONICAL = { ordered: 150, shipped: 138, invoiced: 150, paid: 131, source: "canonical" };
+  var CANONICAL = {
+    ordered: 150, shipped: 138, invoiced: 150, paid: 131,
+    callouts: [{count: 12, dollars: 1800}, {count: 12, dollars: 2100}, {count: 19, dollars: 2400}],
+    source: "canonical"
+  };
 
   var C = {
     canvas:   "#f5f3ee",
@@ -67,21 +71,21 @@
     return n.toLocaleString();
   }
 
+  function fmtDollarCompact(n) {
+    var abs = Math.abs(n);
+    if (abs >= 1e6) return "$" + (abs / 1e6).toFixed(1) + "M";
+    if (abs >= 1e3) return "$" + (abs / 1e3).toFixed(1) + "K";
+    return "$" + abs.toFixed(0);
+  }
+
   function fontSizeForValue(n) {
     if (Math.abs(n) >= 1e6) return "36px";
     if (Math.abs(n) >= 10000) return "40px";
     return "48px";
   }
 
-  function fmtDelta(a, b) {
-    var d = b - a;
-    return (d >= 0 ? "+" : "−") + fmtCompact(Math.abs(d)) + " cases";
-  }
-
-  function calloutStyle(a, b) {
-    return (b > a)
-      ? { fill: C.orSurf,   stroke: C.orBrd,  color: C.orange }
-      : { fill: C.roseSurf, stroke: C.roseBrd, color: C.rose   };
+  function fmtCalloutCount(n) {
+    return n + " order" + (n === 1 ? "" : "s");
   }
 
   function calloutDesc(i, data) {
@@ -169,7 +173,10 @@
         .text("cases");
     });
 
-    var vals = [data.ordered, data.shipped, data.invoiced, data.paid];
+    var callouts = data.callouts || [
+      {count: 0, dollars: 0}, {count: 0, dollars: 0}, {count: 0, dollars: 0}
+    ];
+
     for (var i = 0; i < 3; i++) {
       var x1 = BOX_CX[i]     + BOX_W / 2;
       var x2 = BOX_CX[i + 1] - BOX_W / 2;
@@ -192,11 +199,15 @@
         .attr("stroke-width", 1)
         .attr("stroke-dasharray", "3,3");
 
-      var style = calloutStyle(vals[i], vals[i + 1]);
+      var co = callouts[i];
+      var hasIssues = co.count > 0;
+      var style = hasIssues
+        ? { fill: C.roseSurf, stroke: C.roseBrd, color: C.rose }
+        : { fill: "#ffffff",  stroke: C.border,  color: C.sub  };
 
       // Clickable callout group
       var calloutGroup = svg.append("g")
-        .style("cursor", "pointer")
+        .style("cursor", hasIssues ? "pointer" : "default")
         .attr("data-callout", i);
 
       calloutGroup.append("rect")
@@ -207,6 +218,10 @@
         .attr("stroke-width", 1)
         .attr("rx", 2);
 
+      var calloutLabel = co.dollars > 0
+        ? "−" + fmtDollarCompact(co.dollars)
+        : fmtCalloutCount(co.count);
+
       calloutGroup.append("text")
         .attr("x", mx).attr("y", CALL_TOP + 26)
         .attr("text-anchor", "middle")
@@ -214,7 +229,7 @@
         .style("font-size", "16px")
         .style("font-weight", "700")
         .style("fill", style.color)
-        .text(fmtDelta(vals[i], vals[i + 1]));
+        .text(calloutLabel);
 
       var descs = calloutDesc(i, data);
       calloutGroup.append("text")
@@ -233,18 +248,20 @@
         .style("fill", C.muted)
         .text(descs[1]);
 
-      // "click to drill down" hint
-      calloutGroup.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + CALL_H - 4)
-        .attr("text-anchor", "middle")
-        .style("font-family", C.sans)
-        .style("font-size", "9px")
-        .style("fill", C.muted)
-        .text("click to view orders");
+      // "click to drill down" hint — only show if there are records
+      if (hasIssues) {
+        calloutGroup.append("text")
+          .attr("x", mx).attr("y", CALL_TOP + CALL_H - 4)
+          .attr("text-anchor", "middle")
+          .style("font-family", C.sans)
+          .style("font-size", "9px")
+          .style("fill", C.muted)
+          .text("click to view orders");
+      }
 
-      (function(idx) {
-        calloutGroup.on("click", function() { loadDrilldown(idx); });
-      })(i);
+      (function(idx, active) {
+        if (active) calloutGroup.on("click", function() { loadDrilldown(idx); });
+      })(i, hasIssues);
     }
 
     svg.append("line")
@@ -295,8 +312,10 @@
           html += "<td>";
           if (row.dispute_urgent) {
             html += '<span class="urgent-badge">' + esc(row.dispute_window_expires_at || "—") + "</span>";
+          } else if (row.dispute_window_expires_at) {
+            html += '<span class="expired-badge">' + esc(row.dispute_window_expires_at) + "</span>";
           } else {
-            html += esc(row.dispute_window_expires_at || "—");
+            html += '<span style="color:#595959;">—</span>';
           }
           html += "</td></tr>";
         }

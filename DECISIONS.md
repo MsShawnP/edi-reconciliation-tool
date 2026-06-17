@@ -179,3 +179,10 @@ When a decision is overturned:
 3. Note the link in both directions
 
 This preserves the history of why something is the way it is.
+
+---
+
+### 2026-06-17 — Short-pay gap is dollar-denominated, not case-denominated
+- **Why:** The `paid` case count is reverse-engineered from `total_paid_dollars / avg_unit_price`. SKU price variation means the case-equivalent can round to equal invoiced even when the dollar shortfall is real. Displaying cases for this gap is misleading.
+- **Scope:** PO lifecycle visual, any future display of the invoiced→paid gap
+- **Do not:** Revert to case-count delta for the short-pay callout pill
