@@ -25,7 +25,9 @@ from dashboard.routes.exceptions import (
     get_partners,
     get_997_status,
     get_corpus_date_range,
+    get_date_range_bounds,
     _CLASS_LABELS,
+    _fmt_dollar,
 )
 from dashboard.routes.lifecycle import get_lifecycle_stats
 from dashboard.routes.catalog import get_patterns
@@ -47,22 +49,50 @@ async def dashboard(
     request: Request,
     partner: str = Query(default=""),
     exception_class: str = Query(default="", alias="class"),
+    date_start: str = Query(default=""),
+    date_end: str = Query(default=""),
 ):
-    summary    = get_exception_summary()
-    exceptions = get_exceptions(partner=partner, exception_class=exception_class)
+    bounds     = get_date_range_bounds()
+    summary, total_exposure = get_exception_summary(
+        date_start=date_start, date_end=date_end,
+    )
+    exceptions = get_exceptions(
+        partner=partner, exception_class=exception_class,
+        date_start=date_start, date_end=date_end,
+    )
     partners   = get_partners()
-    date_range = get_corpus_date_range()
     db_ok      = db.is_configured()
+
+    active_start = date_start or (bounds["min_iso"] if bounds else "")
+    active_end   = date_end or (bounds["max_iso"] if bounds else "")
+    active_label = ""
+    if bounds and not date_start and not date_end:
+        active_label = f"{bounds['min_fmt']} – {bounds['max_fmt']} (full corpus)"
+    elif active_start and active_end:
+        from datetime import date as date_cls
+        try:
+            s = date_cls.fromisoformat(active_start)
+            e = date_cls.fromisoformat(active_end)
+            active_label = f"{s.strftime('%b %d, %Y')} – {e.strftime('%b %d, %Y')}"
+        except ValueError:
+            active_label = f"{active_start} – {active_end}"
 
     return templates.TemplateResponse(request, "dashboard.html", {
         "summary":          summary,
+        "total_exposure":   total_exposure,
+        "total_exposure_fmt": _fmt_dollar(total_exposure),
         "exceptions":       exceptions,
         "partners":         partners,
         "selected_partner": partner,
         "selected_class":   exception_class,
         "class_labels":     _CLASS_LABELS,
         "db_ok":            db_ok,
-        "date_range":       date_range,
+        "date_bounds":      bounds,
+        "date_start":       date_start,
+        "date_end":         date_end,
+        "active_start":     active_start,
+        "active_end":       active_end,
+        "active_label":     active_label,
         "active_page":      "dashboard",
     })
 
@@ -76,8 +106,13 @@ async def exception_rows(
     request: Request,
     partner: str = Query(default=""),
     exception_class: str = Query(default="", alias="class"),
+    date_start: str = Query(default=""),
+    date_end: str = Query(default=""),
 ):
-    exceptions = get_exceptions(partner=partner, exception_class=exception_class)
+    exceptions = get_exceptions(
+        partner=partner, exception_class=exception_class,
+        date_start=date_start, date_end=date_end,
+    )
     return templates.TemplateResponse(request, "_exception_rows.html", {
         "exceptions": exceptions,
     })

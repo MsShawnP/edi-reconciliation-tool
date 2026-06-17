@@ -8,14 +8,13 @@
   <div class="page-header__eyebrow">EDI Reconciliation</div>
   <h1 class="page-header__title">Exception Dashboard</h1>
   <p class="page-header__sub">
-    Content-level mismatches across 850 / 856 / 810 / 820 — dollar-ranked by revenue exposure.{% if date_range %}
-    <br><span style="font-size:14px;color:var(--text-secondary);">Corpus period: {{ date_range }}</span>{% endif %}
+    Content-level mismatches across 850 / 856 / 810 / 820 — dollar-ranked by revenue exposure.
   </p>
 </div>
 
 {% if not db_ok %}
 <div class="empty-state">
-  <div class="empty-state__icon">⚠</div>
+  <div class="empty-state__icon">&#x26A0;</div>
   <div class="empty-state__title">No database connection</div>
   <p class="empty-state__note">
     Set <code>DATABASE_URL</code> or <code>POSTGRES_*</code> environment variables,
@@ -24,10 +23,55 @@
 </div>
 {% else %}
 
-{# ---- Summary cards (dollar-ranked exception classes) ---- #}
+{# ---- Date range picker ---- #}
+{% if date_bounds %}
+<section class="section" style="margin-bottom:32px;">
+  <form id="date-range-form" method="get" action="/">
+    {# Preserve partner/class filters when changing dates #}
+    {% if selected_partner %}<input type="hidden" name="partner" value="{{ selected_partner }}">{% endif %}
+    {% if selected_class %}<input type="hidden" name="class" value="{{ selected_class }}">{% endif %}
+
+    <div class="date-range-bar">
+      <div class="date-range-bar__label">Date range</div>
+      <div class="date-range-bar__presets">
+        <button type="button" class="btn btn--ghost btn--sm date-preset {{ 'date-preset--active' if not date_start and not date_end }}" data-preset="all">Full corpus</button>
+        <button type="button" class="btn btn--ghost btn--sm date-preset" data-preset="90">Last 90 days</button>
+        <button type="button" class="btn btn--ghost btn--sm date-preset" data-preset="60">Last 60 days</button>
+        <button type="button" class="btn btn--ghost btn--sm date-preset" data-preset="30">Last 30 days</button>
+      </div>
+      <div class="date-range-bar__inputs">
+        <input type="date" id="date-start" name="date_start"
+               value="{{ date_start or '' }}"
+               min="{{ date_bounds.min_iso }}" max="{{ date_bounds.max_iso }}">
+        <span class="date-range-bar__sep">&ndash;</span>
+        <input type="date" id="date-end" name="date_end"
+               value="{{ date_end or '' }}"
+               min="{{ date_bounds.min_iso }}" max="{{ date_bounds.max_iso }}">
+        <button type="submit" class="btn btn--sm">Apply</button>
+      </div>
+    </div>
+    <div class="date-range-bar__active">
+      {{ active_label }}
+    </div>
+  </form>
+</section>
+{% endif %}
+
+{# ---- Hero cards: 4x2 grid with Total Exposure lead ---- #}
 <section class="section">
   {% if summary %}
-  <div class="cards-grid">
+  <div class="hero-grid">
+    {# Row 1, Col 1: Total Exposure (headline card) #}
+    <div class="exception-card exception-card--hero">
+      <div class="exception-card__class">Total Exposure</div>
+      <div class="exception-card__amount">{{ total_exposure_fmt }}</div>
+      <div class="exception-card__count">
+        all dollar-denominated exception classes{% if active_label %}<br>
+        <span style="font-size:11px;color:var(--text-secondary);">{{ active_label }}</span>{% endif %}
+      </div>
+    </div>
+
+    {# Remaining 7 cards in order #}
     {% for card in summary %}
     <div class="exception-card {{ 'exception-card--urgent' if card.any_urgent else '' }} {{ 'exception-card--ops' if card.ops_only else '' }}">
       <div class="exception-card__class">{{ card.label }}{% if card.ops_only %} <span class="ops-tag">OPS</span>{% endif %}</div>
@@ -70,6 +114,10 @@
     hx-trigger="change, submit"
     hx-indicator="#loading"
   >
+    {# Pass date range to HTMX partial requests #}
+    <input type="hidden" name="date_start" value="{{ date_start }}">
+    <input type="hidden" name="date_end" value="{{ date_end }}">
+
     <div class="filter-bar">
       <label for="partner-filter">Partner</label>
       <select id="partner-filter" name="partner">
@@ -87,7 +135,7 @@
         {% endfor %}
       </select>
 
-      <span id="loading" class="htmx-indicator">Loading…</span>
+      <span id="loading" class="htmx-indicator">Loading&hellip;</span>
     </div>
   </form>
 
@@ -112,8 +160,8 @@
 
   <p class="cascade-footnote" style="font-size:13px;color:var(--text-secondary);margin-top:16px;max-width:660px;line-height:1.5;">
     <strong>Cascade semantics.</strong> The matching engine assigns exactly one status per PO line,
-    evaluated in precedence order: missing ASN → missing invoice → UoM mismatch → quantity
-    mismatch → shipped-not-invoiced → missing payment → short pay. A line failing an earlier
+    evaluated in precedence order: missing ASN &rarr; missing invoice &rarr; UoM mismatch &rarr; quantity
+    mismatch &rarr; shipped-not-invoiced &rarr; missing payment &rarr; short pay. A line failing an earlier
     check is never evaluated against later checks — the first failure is the one that matters
     for triage. Per-class counts therefore reflect the <em>primary</em> failure mode, not every
     possible divergence on that line.
@@ -138,11 +186,46 @@
          hx-get="/ack-status"
          hx-trigger="load"
          hx-swap="innerHTML">
-      <p style="font-size:14px;color:var(--text-secondary);">Loading ACK status…</p>
+      <p style="font-size:14px;color:var(--text-secondary);">Loading ACK status&hellip;</p>
     </div>
   {% endif %}
 </div>
 
 {% endif %}{# end db_ok #}
 
+{% endblock %}
+
+{% block extra_scripts %}
+{% if date_bounds %}
+<script>
+(function() {
+  var bounds = {
+    min: "{{ date_bounds.min_iso }}",
+    max: "{{ date_bounds.max_iso }}"
+  };
+  var form = document.getElementById("date-range-form");
+  var startInput = document.getElementById("date-start");
+  var endInput = document.getElementById("date-end");
+  var presets = document.querySelectorAll(".date-preset");
+
+  presets.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var preset = btn.dataset.preset;
+      if (preset === "all") {
+        startInput.value = "";
+        endInput.value = "";
+      } else {
+        var maxDate = new Date(bounds.max);
+        var days = parseInt(preset, 10);
+        var start = new Date(maxDate);
+        start.setDate(start.getDate() - days);
+        startInput.value = start.toISOString().slice(0, 10);
+        endInput.value = bounds.max;
+      }
+      form.submit();
+    });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}
