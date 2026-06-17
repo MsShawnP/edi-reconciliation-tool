@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-17 00:05 — WRAP: 852 math fixed; live database corrected
+
+**Started from:** 852 math issue diagnosed but not fixed. Dashboard showing inflated $99.3M sell-through.
+
+**Did:** Rewrote `int_852_match` to `(partner_id, sku)` grain (commit 881ff4b). Ran `dbt run` against live Fly Postgres. 852 exceptions: 87,897 → 100 rows, $99.3M → $1.75M. Pushed.
+
+**State:** Live database corrected. 97 tests pass, 3 pre-existing failures in test_validate.py, 31 skipped. All commits pushed.
+
+**Next:** Verify live dashboard at reconcile.lailarallc.com shows corrected numbers. Then: fix 3 pre-existing test_validate.py failures, deferred findings #14/#18/#19, `/improve`, or call arc done.
+
+---
+
 ## 2026-06-17 00:03 — LOG: 852 math fixed — int_852_match rewritten to (partner_id, sku) grain
 
 **What changed:** Rewrote `int_852_match` from per-report-per-period grain to `(partner_id, sku)` grain. 852 exceptions dropped from 87,897 rows / $99.3M to 100 rows / $1.75M. dbt run completed against live Fly Postgres; dashboard data corrected. Commit 881ff4b, pushed.
