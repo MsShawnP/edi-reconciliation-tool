@@ -16,6 +16,8 @@ _CALLOUT_CLASS_MAP = {
     "2": "short_pay",
 }
 
+_CALLOUT_CLASSES = ["ordered_not_asnd", "shipped_not_invoiced", "short_pay"]
+
 
 def get_lifecycle_partners() -> list[str]:
     """Distinct partner IDs from the four-way match."""
@@ -117,6 +119,44 @@ def get_lifecycle_stats(partner: str = "") -> dict[str, Any] | None:
     except Exception:
         logger.exception("get_lifecycle_stats query failed")
         return None
+
+
+def get_callout_stats(partner: str = "") -> list[dict[str, Any]]:
+    """Count and dollar sum per callout class from the exception mart.
+
+    Returns a 3-element list aligned with _CALLOUT_CLASSES, each with
+    {count, dollars}. Falls back to zeros when DB is unavailable.
+    """
+    empty = [{"count": 0, "dollars": 0.0} for _ in _CALLOUT_CLASSES]
+    if not db.is_configured():
+        return empty
+    try:
+        conditions = ["exception_class = any(%s)"]
+        params: list[Any] = [_CALLOUT_CLASSES]
+        if partner:
+            conditions.append("partner_id = %s")
+            params.append(partner)
+        where = " and ".join(conditions)
+        rows = db.query(f"""
+            select
+                exception_class,
+                count(*) as cnt,
+                coalesce(sum(dollar_impact), 0) as dollars
+            from {_SCHEMA}.fct_exceptions
+            where {where}
+            group by exception_class
+        """, tuple(params))
+        lookup = {r["exception_class"]: r for r in rows}
+        return [
+            {
+                "count": int(lookup[cls]["cnt"]) if cls in lookup else 0,
+                "dollars": float(lookup[cls]["dollars"]) if cls in lookup else 0.0,
+            }
+            for cls in _CALLOUT_CLASSES
+        ]
+    except Exception:
+        logger.exception("get_callout_stats query failed")
+        return empty
 
 
 def get_lifecycle_drilldown(

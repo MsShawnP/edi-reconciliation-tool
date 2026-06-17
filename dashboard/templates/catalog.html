@@ -13,6 +13,50 @@
   </p>
 </div>
 
+{# ---- Filters: partner + date range ---- #}
+<section class="section" style="margin-bottom:24px;">
+  <form id="catalog-filter-form" method="get" action="/catalog">
+
+    <div class="date-range-bar" style="flex-wrap:wrap;gap:12px;">
+      {# Partner dropdown #}
+      <div class="filter-bar" style="margin:0;">
+        <label for="catalog-partner-filter">Partner / Distributor</label>
+        <select id="catalog-partner-filter" name="partner" onchange="this.form.submit()">
+          <option value="">All partners</option>
+          {% for p in partners %}
+          <option value="{{ p }}" {{ 'selected' if p == selected_partner else '' }}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Date range picker #}
+      {% if date_bounds %}
+      <div class="date-range-bar__label">Date range</div>
+      <div class="date-range-bar__presets">
+        <button type="button" class="btn btn--ghost btn--sm date-preset {{ 'date-preset--active' if not date_start and not date_end }}" data-preset="all">Full corpus</button>
+        <button type="button" class="btn btn--ghost btn--sm date-preset" data-preset="365">Current year</button>
+        <button type="button" class="btn btn--ghost btn--sm date-preset" data-preset="90">Last 90 days</button>
+        <button type="button" class="btn btn--ghost btn--sm date-preset" data-preset="30">Last 30 days</button>
+      </div>
+      <div class="date-range-bar__inputs">
+        <input type="date" id="catalog-date-start" name="date_start"
+               value="{{ date_start or '' }}"
+               min="{{ date_bounds.min_iso }}" max="{{ date_bounds.max_iso }}">
+        <span class="date-range-bar__sep">&ndash;</span>
+        <input type="date" id="catalog-date-end" name="date_end"
+               value="{{ date_end or '' }}"
+               min="{{ date_bounds.min_iso }}" max="{{ date_bounds.max_iso }}">
+        <button type="submit" class="btn btn--sm">Apply</button>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if active_label %}
+    <div class="date-range-bar__active">{{ active_label }}</div>
+    {% endif %}
+  </form>
+</section>
+
 {# ---- Revenue-affecting patterns ---- #}
 <section class="section">
   <h2 class="section-title">Revenue-Affecting Exceptions</h2>
@@ -193,14 +237,39 @@
     return d.innerHTML;
   }
 
+  function getFilterParams() {
+    var params = [];
+    var partner = document.getElementById("catalog-partner-filter");
+    if (partner && partner.value) params.push("partner=" + encodeURIComponent(partner.value));
+    var ds = document.getElementById("catalog-date-start");
+    if (ds && ds.value) params.push("date_start=" + encodeURIComponent(ds.value));
+    var de = document.getElementById("catalog-date-end");
+    if (de && de.value) params.push("date_end=" + encodeURIComponent(de.value));
+    return params.length ? "&" + params.join("&") : "";
+  }
+
+  function buildSummaryBar(summary) {
+    if (!summary || summary.total === 0) return "";
+    var html = '<div style="display:flex;gap:16px;align-items:center;padding:8px 0 12px;font-family:var(--sans);font-size:13px;color:#595959;">';
+    html += '<span><strong>' + summary.total + '</strong> orders &middot; <strong>' + esc(summary.total_dollars_fmt) + '</strong> total</span>';
+    if (summary.still_open > 0) {
+      html += '<span style="color:#0e6e5a;font-weight:600;">' + summary.still_open + ' still disputable</span>';
+    }
+    if (summary.expired > 0) {
+      html += '<span style="color:#7a0906;">' + summary.expired + ' expired</span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function buildTable(rows) {
     if (!rows || rows.length === 0) {
-      return '<p style="text-align:center;padding:16px;color:#595959;">No matching orders in the current corpus.</p>';
+      return '<p style="text-align:center;padding:16px;color:#595959;">No matching orders for the selected filters.</p>';
     }
     var html = '<div class="table-wrapper"><table><thead><tr>' +
       '<th>Partner</th><th>Exception type</th><th>PO number</th>' +
       '<th>SKU</th><th>Invoice</th><th style="text-align:right;">Dollar impact</th>' +
-      '<th>Dispute window</th></tr></thead><tbody>';
+      '<th>Dispute status</th></tr></thead><tbody>';
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       html += "<tr>";
@@ -213,8 +282,10 @@
       html += "<td>";
       if (r.dispute_urgent) {
         html += '<span class="urgent-badge">' + esc(r.dispute_window_expires_at || "—") + "</span>";
+      } else if (r.dispute_window_expires_at) {
+        html += '<span class="expired-badge">' + esc(r.dispute_window_expires_at) + '</span>';
       } else {
-        html += esc(r.dispute_window_expires_at || "—");
+        html += '<span style="color:#595959;">—</span>';
       }
       html += "</td></tr>";
     }
@@ -238,10 +309,13 @@
       body.innerHTML = "";
       body.style.display = "block";
 
-      fetch("/api/catalog/drilldown?class=" + encodeURIComponent(excClass))
+      var url = "/api/catalog/drilldown?class=" + encodeURIComponent(excClass) + getFilterParams();
+      fetch(url)
         .then(function(r) { return r.json(); })
-        .then(function(rows) {
-          body.innerHTML = buildTable(rows);
+        .then(function(data) {
+          var rows = data.rows || data;
+          var summary = data.summary || null;
+          body.innerHTML = buildSummaryBar(summary) + buildTable(rows);
           btn.textContent = "Hide matching orders";
         })
         .catch(function() {
@@ -250,6 +324,31 @@
         });
     });
   });
+
+  // Date preset buttons
+  var form = document.getElementById("catalog-filter-form");
+  if (form) {
+    form.querySelectorAll(".date-preset").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var preset = btn.dataset.preset;
+        var ds = document.getElementById("catalog-date-start");
+        var de = document.getElementById("catalog-date-end");
+        if (!ds || !de) return;
+        if (preset === "all") {
+          ds.value = "";
+          de.value = "";
+        } else {
+          var days = parseInt(preset, 10);
+          var end = new Date();
+          var start = new Date();
+          start.setDate(start.getDate() - days);
+          ds.value = start.toISOString().slice(0, 10);
+          de.value = end.toISOString().slice(0, 10);
+        }
+        form.submit();
+      });
+    });
+  }
 })();
 </script>
 {% endblock %}
