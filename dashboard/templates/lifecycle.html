@@ -6,21 +6,63 @@
 
 <!-- Server-injected lifecycle numbers for D3 (pure numeric JSON, safe without escaping) -->
 <script id="lifecycle-data" type="application/json">{{ lifecycle_json | safe }}</script>
+<script id="lifecycle-partner" type="application/json">"{{ selected_partner }}"</script>
 
 <div class="page-header">
   <div class="page-header__eyebrow">Portfolio Visual</div>
   <h1 class="page-header__title">PO Lifecycle</h1>
   <p class="page-header__sub">
-    Ordered → Shipped → Invoiced → Paid — where quantities diverge and dollars leak.
+    Ordered &rarr; Shipped &rarr; Invoiced &rarr; Paid — where quantities diverge and dollars leak.
     {% if not db_ok %}
     <span class="note--muted">(Showing canonical example — connect to Postgres for live corpus data.)</span>
     {% endif %}
   </p>
 </div>
 
+{# ---- Partner selector ---- #}
+{% if partners %}
+<section class="section" style="margin-bottom:24px;">
+  <form method="get" action="/lifecycle">
+    <div class="filter-bar">
+      <label for="lifecycle-partner-filter">Partner / Distributor</label>
+      <select id="lifecycle-partner-filter" name="partner" onchange="this.form.submit()">
+        <option value="">All partners</option>
+        {% for p in partners %}
+        <option value="{{ p }}" {{ 'selected' if p == selected_partner else '' }}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </form>
+</section>
+{% endif %}
+
 <section class="section">
   <!-- D3 renders the SVG into this container -->
   <div id="lifecycle-visual" class="lifecycle-visual"></div>
+</section>
+
+{# ---- Drill-down table (populated by JS when a callout is clicked) ---- #}
+<section class="section" id="lifecycle-drilldown" style="display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <h3 id="drilldown-title" class="section-title" style="margin-bottom:0;"></h3>
+    <button type="button" class="btn btn--ghost btn--sm" id="drilldown-close">Close</button>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Partner</th>
+          <th>Exception type</th>
+          <th>PO number</th>
+          <th>SKU</th>
+          <th>Invoice</th>
+          <th style="text-align:right;">Dollar impact</th>
+          <th>Dispute window</th>
+        </tr>
+      </thead>
+      <tbody id="drilldown-rows"></tbody>
+    </table>
+  </div>
 </section>
 
 {% endblock %}
