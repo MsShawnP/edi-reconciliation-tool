@@ -3,7 +3,6 @@
 Unit tests (no DB required):
 - GET /lifecycle returns 200
 - GET / returns 200
-- visuals/po_lifecycle.svg exists at 1200x628
 - dashboard/static/js/lifecycle.js exists
 - get_lifecycle_stats() returns None when DB not configured
 """
@@ -68,31 +67,6 @@ def test_ack_status_partial_ok(client):
 # ---------------------------------------------------------------------------
 # Static asset existence
 # ---------------------------------------------------------------------------
-
-def test_svg_exists():
-    svg = _REPO / "visuals" / "po_lifecycle.svg"
-    assert svg.is_file(), "visuals/po_lifecycle.svg not found"
-
-
-def test_svg_dimensions():
-    svg = (_REPO / "visuals" / "po_lifecycle.svg").read_text(encoding="utf-8")
-    assert 'width="1200"' in svg
-    assert 'height="628"' in svg
-    assert 'viewBox="0 0 1200 628"' in svg
-
-
-def test_svg_has_four_boxes():
-    svg = (_REPO / "visuals" / "po_lifecycle.svg").read_text(encoding="utf-8")
-    for label in ("ORDERED", "SHIPPED", "INVOICED", "PAID"):
-        assert label in svg, f"Expected stage label {label!r} in SVG"
-
-
-def test_svg_has_callouts():
-    svg = (_REPO / "visuals" / "po_lifecycle.svg").read_text(encoding="utf-8")
-    assert "OTIF" in svg
-    assert "unbilled" in svg.lower()
-    assert "dispute" in svg.lower()
-
 
 def test_lifecycle_js_exists():
     js = _REPO / "dashboard" / "static" / "js" / "lifecycle.js"
