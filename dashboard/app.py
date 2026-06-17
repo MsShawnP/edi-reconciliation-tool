@@ -24,6 +24,7 @@ from dashboard.routes.exceptions import (
     get_exceptions,
     get_partners,
     get_997_status,
+    get_corpus_date_range,
     _CLASS_LABELS,
 )
 from dashboard.routes.lifecycle import get_lifecycle_stats
@@ -50,6 +51,7 @@ async def dashboard(
     summary    = get_exception_summary()
     exceptions = get_exceptions(partner=partner, exception_class=exception_class)
     partners   = get_partners()
+    date_range = get_corpus_date_range()
     db_ok      = db.is_configured()
 
     return templates.TemplateResponse(request, "dashboard.html", {
@@ -60,6 +62,7 @@ async def dashboard(
         "selected_class":   exception_class,
         "class_labels":     _CLASS_LABELS,
         "db_ok":            db_ok,
+        "date_range":       date_range,
         "active_page":      "dashboard",
     })
 
