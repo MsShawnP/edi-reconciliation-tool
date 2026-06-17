@@ -206,8 +206,102 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
 }
 
 /* --------------------------------------------------------------------------
+ * Date range picker
+ * -------------------------------------------------------------------------- */
+.date-range-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+
+.date-range-bar__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.date-range-bar__presets {
+  display: flex;
+  gap: 6px;
+}
+
+.date-range-bar__inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.date-range-bar__inputs input[type="date"] {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 5px 8px;
+  outline: none;
+}
+
+.date-range-bar__inputs input[type="date"]:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 2px var(--navy-surface);
+}
+
+.date-range-bar__sep {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.date-range-bar__active {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 6px 0 0;
+}
+
+.btn--sm {
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
+.date-preset--active {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+@media (max-width: 640px) {
+  .date-range-bar { flex-direction: column; align-items: stretch; }
+  .date-range-bar__inputs { margin-left: 0; }
+  .date-range-bar__presets { flex-wrap: wrap; }
+}
+
+/* --------------------------------------------------------------------------
  * Summary cards (dollar-ranked exception classes)
  * -------------------------------------------------------------------------- */
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 800px) {
+  .hero-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .hero-grid { grid-template-columns: 1fr; }
+}
+
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -253,6 +347,24 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
 .exception-card__count {
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.exception-card--hero {
+  border-left: 3px solid var(--ink);
+  background: var(--card-bg);
+}
+
+.exception-card--hero .exception-card__class {
+  color: #d8d8d8;
+}
+
+.exception-card--hero .exception-card__amount {
+  color: #fff;
+  font-size: 32px;
+}
+
+.exception-card--hero .exception-card__count {
+  color: #9a9a9a;
 }
 
 .exception-card--ops {
