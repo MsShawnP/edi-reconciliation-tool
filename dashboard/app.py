@@ -29,7 +29,11 @@ from dashboard.routes.exceptions import (
     _CLASS_LABELS,
     _fmt_dollar,
 )
-from dashboard.routes.lifecycle import get_lifecycle_stats
+from dashboard.routes.lifecycle import (
+    get_lifecycle_stats,
+    get_lifecycle_partners,
+    get_lifecycle_drilldown,
+)
 from dashboard.routes.catalog import get_patterns
 
 _ROOT = Path(__file__).parent
@@ -135,15 +139,19 @@ async def ack_status(request: Request):
 # ---------------------------------------------------------------------------
 
 @app.get("/lifecycle", response_class=HTMLResponse)
-async def lifecycle_page(request: Request):
-    stats = get_lifecycle_stats()
-    # json.dumps with ensure_ascii=True is safe to embed in <script type="application/json">.
-    # Include 'source' so the JS subtitle can distinguish live vs canonical data.
+async def lifecycle_page(
+    request: Request,
+    partner: str = Query(default=""),
+):
+    stats = get_lifecycle_stats(partner=partner)
+    partners = get_lifecycle_partners()
     lifecycle_json = json.dumps({**stats, "source": "live"} if stats else {})
     return templates.TemplateResponse(request, "lifecycle.html", {
-        "active_page":    "lifecycle",
-        "db_ok":          db.is_configured(),
-        "lifecycle_json": lifecycle_json,
+        "active_page":       "lifecycle",
+        "db_ok":             db.is_configured(),
+        "lifecycle_json":    lifecycle_json,
+        "partners":          partners,
+        "selected_partner":  partner,
     })
 
 
@@ -164,8 +172,8 @@ async def catalog_page(request: Request):
 # ---------------------------------------------------------------------------
 
 @app.get("/api/lifecycle")
-async def api_lifecycle() -> JSONResponse:
-    stats = get_lifecycle_stats()
+async def api_lifecycle(partner: str = Query(default="")) -> JSONResponse:
+    stats = get_lifecycle_stats(partner=partner)
     if stats:
         return JSONResponse({**stats, "source": "live"})
     return JSONResponse({
@@ -173,3 +181,12 @@ async def api_lifecycle() -> JSONResponse:
         "shipped_short": 12, "invoiced_excess": 12, "short_pay_dollars": 2400.0,
         "source": "canonical",
     })
+
+
+@app.get("/api/lifecycle/drilldown")
+async def api_lifecycle_drilldown(
+    callout: str = Query(default=""),
+    partner: str = Query(default=""),
+) -> JSONResponse:
+    rows = get_lifecycle_drilldown(callout_index=callout, partner=partner)
+    return JSONResponse(rows)
