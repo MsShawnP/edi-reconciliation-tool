@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-17 03:15 — WRAP: Five-feature dashboard upgrade deployed
+
+**Started from:** All 9 units shipped, 852 math fixed. 97 tests passing, 3 pre-existing failures in test_validate.py.
+
+**Did:** Shipped 4 feature upgrades: global date range picker with presets, 4×2 hero card grid with Total Exposure headline, interactive PO lifecycle with partner filter + clickable drill-down callouts, failure pattern catalog drill-down. Deployed to Fly.io, pushed to GitHub.
+
+**State:** 80 tests pass, 31 skipped (DB), 3 pre-existing failures in test_validate.py. All features live at reconcile.lailarallc.com. New API endpoints: `/api/lifecycle/drilldown`, `/api/catalog/drilldown`.
+
+**Next:** Verify all features on reconcile.lailarallc.com in a browser — date picker, hero cards, lifecycle drill-downs, catalog drill-downs. Then: fix 3 pre-existing test_validate.py failures, deferred findings #14/#18/#19, or run `/improve`.
+
+---
+
 ## 2026-06-17 03:12 — LOG: Five-feature dashboard upgrade (#1–#4 shipped, #5 already done)
 
 **What changed:** Shipped 4 feature upgrades across 3 commits: global date range picker with presets, 4×2 hero card grid with Total Exposure headline, interactive PO lifecycle with partner filter + clickable drill-down callouts, and failure pattern catalog drill-down. Feature #5 (remove SVG export) was already done in a prior session.
