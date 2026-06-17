@@ -8,7 +8,8 @@
   <div class="page-header__eyebrow">EDI Reconciliation</div>
   <h1 class="page-header__title">Exception Dashboard</h1>
   <p class="page-header__sub">
-    Content-level mismatches across 850 / 856 / 810 / 820 — dollar-ranked by revenue exposure.
+    Content-level mismatches across 850 / 856 / 810 / 820 — dollar-ranked by revenue exposure.{% if date_range %}
+    <br><span style="font-size:14px;color:var(--text-secondary);">Corpus period: {{ date_range }}</span>{% endif %}
   </p>
 </div>
 

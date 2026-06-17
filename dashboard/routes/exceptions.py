@@ -152,6 +152,27 @@ def get_exceptions(
         return []
 
 
+def get_corpus_date_range() -> str | None:
+    """Return a formatted date range string for the corpus, e.g. 'Jan 2023 – Jan 2026'."""
+    if not db.is_configured():
+        return None
+    try:
+        rows = db.query(f"""
+            select min(dispute_date_anchor) as min_date,
+                   max(dispute_date_anchor) as max_date
+            from {_SCHEMA}.fct_exceptions
+            where dispute_date_anchor is not null
+        """)
+        if not rows or rows[0]["min_date"] is None:
+            return None
+        mn = rows[0]["min_date"]
+        mx = rows[0]["max_date"]
+        return f"{mn.strftime('%b %Y')} – {mx.strftime('%b %Y')}"
+    except Exception:
+        logger.exception("get_corpus_date_range query failed")
+        return None
+
+
 def get_partners() -> list[str]:
     """Distinct partner IDs for the filter dropdown."""
     if not db.is_configured():
