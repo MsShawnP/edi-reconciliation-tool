@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-17 03:12 — LOG: Five-feature dashboard upgrade (#1–#4 shipped, #5 already done)
+
+**What changed:** Shipped 4 feature upgrades across 3 commits: global date range picker with presets, 4×2 hero card grid with Total Exposure headline, interactive PO lifecycle with partner filter + clickable drill-down callouts, and failure pattern catalog drill-down. Feature #5 (remove SVG export) was already done in a prior session.
+
+**Why:** Requested feature upgrade pass to make the dashboard interactive and add date context to all numbers.
+
+**State:** 80 tests pass, 31 skipped (DB), 3 pre-existing failures in test_validate.py. All 4 features committed on main. Not yet deployed — need `fly deploy` and `dbt run` on live Postgres to verify. New API endpoints: `/api/lifecycle/drilldown`, `/api/catalog/drilldown`.
+
+**Next:** Deploy to Fly.io (`fly deploy`), then verify all 5 features on reconcile.lailarallc.com. Date picker and drill-downs require live database to function.
+
+---
+
 ## 2026-06-17 00:05 — WRAP: 852 math fixed; live database corrected
 
 **Started from:** 852 math issue diagnosed but not fixed. Dashboard showing inflated $99.3M sell-through.
