@@ -94,10 +94,6 @@ def get_lifecycle_stats(partner: str = "") -> dict[str, Any] | None:
             total_paid_dollars / avg_unit_price if avg_unit_price > 0 else 0
         )
 
-        shipped_short   = max(0, total_ordered  - total_shipped)
-        invoiced_excess = max(0, total_invoiced - total_shipped)
-        short_pay_dlrs  = max(0, total_invoiced_dollars - total_paid_dollars)
-
         ordered  = int(round(total_ordered))
         shipped  = int(round(total_shipped))
         invoiced = int(round(total_invoiced))
@@ -107,14 +103,11 @@ def get_lifecycle_stats(partner: str = "") -> dict[str, Any] | None:
             paid = invoiced
 
         return {
-            "ordered":           ordered,
-            "shipped":           shipped,
-            "invoiced":          invoiced,
-            "paid":              paid,
-            "shipped_short":     int(round(shipped_short)),
-            "invoiced_excess":   int(round(invoiced_excess)),
-            "short_pay_dollars": round(short_pay_dlrs, 2),
-            "source":            "live",
+            "ordered":  ordered,
+            "shipped":  shipped,
+            "invoiced": invoiced,
+            "paid":     paid,
+            "source":   "live",
         }
     except Exception:
         logger.exception("get_lifecycle_stats query failed")
