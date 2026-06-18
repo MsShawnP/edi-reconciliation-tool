@@ -1,0 +1,84 @@
+project: edi-reconciliation-tool
+base_url: https://reconcile.lailarallc.com
+
+routes:
+  - path: /
+    name: Exception Dashboard
+  - path: /lifecycle
+    name: PO Lifecycle
+  - path: /catalog
+    name: Failure Pattern Catalog
+
+# Scan source files for dev markers and hardcoded locals
+forbidden_content:
+  - pattern: "TODO|FIXME|HACK|XXX"
+    severity: warning
+    reason: Dev markers in production code
+  - pattern: "localhost|127\\.0\\.0\\.1"
+    severity: warning
+    reason: Hardcoded local URLs
+    exclude:
+      - "README.md"
+      - "*.md"
+  - pattern: "password\\s*=|api_key\\s*=|secret\\s*="
+    severity: fail
+    reason: Possible hardcoded credentials
+    exclude:
+      - "*.md"
+
+# DOM checks — verify key elements render on each page
+dom_checks:
+  - route: /
+    elements:
+      - selector: h1
+        label: Main heading present
+      - selector: ".site-nav"
+        label: Navigation bar present
+      - selector: ".site-footer"
+        label: Footer present
+      - selector: ".exception-card"
+        label: Exception summary cards rendered
+      - selector: table
+        label: Exception table present
+    absent:
+      - selector: ".empty-state__icon"
+        label: No error state shown
+
+  - route: /lifecycle
+    elements:
+      - selector: h1
+        label: Lifecycle heading present
+      - selector: ".site-nav"
+        label: Navigation bar present
+      - selector: ".site-footer"
+        label: Footer present
+
+  - route: /catalog
+    elements:
+      - selector: h1
+        label: Catalog heading present
+      - selector: ".site-nav"
+        label: Navigation bar present
+      - selector: ".site-footer"
+        label: Footer present
+
+# Layout checks — no horizontal scroll on any page
+layout:
+  - route: /
+    assertions:
+      - type: no_horizontal_scroll
+  - route: /lifecycle
+    assertions:
+      - type: no_horizontal_scroll
+  - route: /catalog
+    assertions:
+      - type: no_horizontal_scroll
+
+# Staleness detection — flag if output is older than source
+staleness:
+  source_dirs:
+    - dashboard/templates
+    - dashboard/routes
+    - dashboard/static
+  output_dirs:
+    - dashboard/static/css
