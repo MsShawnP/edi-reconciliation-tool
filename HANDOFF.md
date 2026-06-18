@@ -9,6 +9,18 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-06-18 09:43
+
+**What changed:** Lifecycle callout fixes round 2 — deployed the mart-sourced callouts (was committed but never deployed), enlarged callout boxes, and added paginated drill-down with count header + "Load next 100".
+
+**Why:** Live site still showed "+0 cases" because the prior mart-sourcing fix had never been deployed. Hardened the client fallback so an empty `{}` payload no longer masquerades as valid live data. Boxes were footnote-sized vs the funnel. User asked drill-down to show top 100 with option to load the next 100.
+
+**State:** All three fixes committed separately (24bc9bc fix, 2632581 style, ce20af3 feat), pushed, and deployed to Fly. Verified live: short_pay callout = 2,420 orders / $17.0M; drill-down total reconciles to 2,420; pages of 100 (offset 0/100/2400 → 100/100/20 rows). 97 tests pass, 31 skipped, 3 pre-existing test_validate.py failures (unrelated). Working tree clean except untracked screenshots/ and dbt .user.yml (now gitignored).
+
+**Next:** Hard-refresh reconcile.lailarallc.com/lifecycle to confirm visually (boxes + paginated drill-down). Then: remaining deferred findings #14/#18/#19, fix the 3 test_validate.py failures, or call the arc done.
+
+---
+
 ## 2026-06-17 04:00 — WRAP: Short-pay pill fix, catalog filters, dispute status badges
 
 **Started from:** Dashboard live with 5 features shipped. User reported short-pay pill showing "+0 cases" despite real short-pay orders existing in the drill-down.

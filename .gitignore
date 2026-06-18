@@ -37,3 +37,6 @@ transforms/logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# dbt anonymous-usage user id (machine-specific, do not commit)
+transforms/.user.yml
