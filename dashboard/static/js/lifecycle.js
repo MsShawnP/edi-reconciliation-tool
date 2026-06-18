@@ -64,6 +64,10 @@
     if (pEl) currentPartner = JSON.parse(pEl.textContent) || "";
   } catch (_) {}
 
+  var PAGE_SIZE = 100;
+  var activeData = null;                                  // last-rendered data, for callout dollar totals
+  var dd = { callout: null, offset: 0, loaded: 0, total: 0 };  // drill-down pagination state
+
   function fmtCompact(n) {
     var abs = Math.abs(n);
     if (abs >= 1e6) return (n / 1e6).toFixed(1) + "M";
@@ -99,6 +103,7 @@
   function render(data) {
     var container = document.getElementById("lifecycle-visual");
     if (!container) return;
+    activeData = data;
     container.innerHTML = "";
 
     var svg = d3.select(container)
@@ -278,52 +283,89 @@
       .text("Synthetic corpus — Walmart · UNFI · KeHE. UoM normalized to cases before comparison.");
   }
 
-  function loadDrilldown(calloutIndex) {
-    var section = document.getElementById("lifecycle-drilldown");
-    var title = document.getElementById("drilldown-title");
+  function rowHtml(row) {
+    var html = "<tr>";
+    html += '<td><span class="partner-badge">' + esc(row.partner_id) + "</span></td>";
+    html += '<td><span class="chip chip--' + esc(row.exception_class) + '">' + esc(row.class_label) + "</span></td>";
+    html += "<td>" + esc(row.po_number || "—") + "</td>";
+    html += "<td>" + esc(row.sku || "—") + "</td>";
+    html += "<td>" + esc(row.invoice_number || "—") + "</td>";
+    html += '<td class="td--dollar">' + esc(row.dollar_fmt) + "</td>";
+    html += "<td>";
+    if (row.dispute_urgent) {
+      html += '<span class="urgent-badge">' + esc(row.dispute_window_expires_at || "—") + "</span>";
+    } else if (row.dispute_window_expires_at) {
+      html += '<span class="expired-badge">' + esc(row.dispute_window_expires_at) + "</span>";
+    } else {
+      html += '<span style="color:#595959;">—</span>';
+    }
+    return html + "</td></tr>";
+  }
+
+  function updateDrilldownMeta() {
+    var meta = document.getElementById("drilldown-meta");
+    var loadBtn = document.getElementById("drilldown-loadmore");
+    if (meta) {
+      var dollars = (activeData && activeData.callouts && activeData.callouts[dd.callout])
+        ? activeData.callouts[dd.callout].dollars : 0;
+      var dollarStr = dollars > 0 ? " · " + fmtDollarCompact(dollars) + " total exposure" : "";
+      meta.textContent = dd.total > 0
+        ? "Showing " + dd.loaded.toLocaleString() + " of " + dd.total.toLocaleString() + " orders" + dollarStr
+        : "";
+    }
+    if (loadBtn) {
+      loadBtn.style.display = (dd.loaded < dd.total) ? "inline-block" : "none";
+      loadBtn.textContent = "Load next " + Math.min(PAGE_SIZE, dd.total - dd.loaded);
+    }
+  }
+
+  function fetchDrilldownPage(append) {
     var tbody = document.getElementById("drilldown-rows");
-    if (!section || !title || !tbody) return;
+    if (!tbody) return;
 
-    title.textContent = CALLOUT_LABELS[calloutIndex] + " — Matching Orders";
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#595959;">Loading…</td></tr>';
-    section.style.display = "block";
-    section.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    var url = "/api/lifecycle/drilldown?callout=" + calloutIndex;
+    var url = "/api/lifecycle/drilldown?callout=" + dd.callout + "&offset=" + dd.offset;
     if (currentPartner) url += "&partner=" + encodeURIComponent(currentPartner);
 
     fetch(url)
       .then(function(r) { return r.json(); })
-      .then(function(rows) {
-        if (!rows || rows.length === 0) {
+      .then(function(res) {
+        var rows = (res && res.rows) || [];
+        dd.total = (res && res.total) || 0;
+        if (!append && rows.length === 0) {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#595959;">No matching orders found.</td></tr>';
+          updateDrilldownMeta();
           return;
         }
         var html = "";
-        for (var i = 0; i < rows.length; i++) {
-          var row = rows[i];
-          html += "<tr>";
-          html += '<td><span class="partner-badge">' + esc(row.partner_id) + "</span></td>";
-          html += '<td><span class="chip chip--' + esc(row.exception_class) + '">' + esc(row.class_label) + "</span></td>";
-          html += "<td>" + esc(row.po_number || "—") + "</td>";
-          html += "<td>" + esc(row.sku || "—") + "</td>";
-          html += "<td>" + esc(row.invoice_number || "—") + "</td>";
-          html += '<td class="td--dollar">' + esc(row.dollar_fmt) + "</td>";
-          html += "<td>";
-          if (row.dispute_urgent) {
-            html += '<span class="urgent-badge">' + esc(row.dispute_window_expires_at || "—") + "</span>";
-          } else if (row.dispute_window_expires_at) {
-            html += '<span class="expired-badge">' + esc(row.dispute_window_expires_at) + "</span>";
-          } else {
-            html += '<span style="color:#595959;">—</span>';
-          }
-          html += "</td></tr>";
-        }
-        tbody.innerHTML = html;
+        for (var i = 0; i < rows.length; i++) html += rowHtml(rows[i]);
+        if (append) tbody.insertAdjacentHTML("beforeend", html);
+        else tbody.innerHTML = html;
+        dd.loaded += rows.length;
+        dd.offset += rows.length;
+        updateDrilldownMeta();
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#b82d4a;">Failed to load drill-down data.</td></tr>';
+        if (!append) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#b82d4a;">Failed to load drill-down data.</td></tr>';
+        }
       });
+  }
+
+  function loadDrilldown(calloutIndex) {
+    var section = document.getElementById("lifecycle-drilldown");
+    var title = document.getElementById("drilldown-title");
+    var tbody = document.getElementById("drilldown-rows");
+    var meta = document.getElementById("drilldown-meta");
+    if (!section || !title || !tbody) return;
+
+    dd = { callout: calloutIndex, offset: 0, loaded: 0, total: 0 };
+    title.textContent = CALLOUT_LABELS[calloutIndex] + " — Matching Orders";
+    if (meta) meta.textContent = "";
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#595959;">Loading…</td></tr>';
+    section.style.display = "block";
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    fetchDrilldownPage(false);
   }
 
   function esc(s) {
@@ -338,6 +380,14 @@
     closeBtn.addEventListener("click", function() {
       var section = document.getElementById("lifecycle-drilldown");
       if (section) section.style.display = "none";
+    });
+  }
+
+  // Load-next-page button
+  var loadMoreBtn = document.getElementById("drilldown-loadmore");
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener("click", function() {
+      if (dd.callout !== null) fetchDrilldownPage(true);
     });
   }
 

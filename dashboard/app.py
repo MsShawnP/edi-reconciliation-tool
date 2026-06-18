@@ -290,6 +290,9 @@ async def api_lifecycle(partner: str = Query(default="")) -> JSONResponse:
 async def api_lifecycle_drilldown(
     callout: str = Query(default=""),
     partner: str = Query(default=""),
+    offset: int = Query(default=0, ge=0),
 ) -> JSONResponse:
-    rows = get_lifecycle_drilldown(callout_index=callout, partner=partner)
-    return JSONResponse(rows)
+    result = get_lifecycle_drilldown(
+        callout_index=callout, partner=partner, offset=offset
+    )
+    return JSONResponse(result)
