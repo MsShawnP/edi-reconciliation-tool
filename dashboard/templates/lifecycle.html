@@ -43,10 +43,11 @@
 
 {# ---- Drill-down table (populated by JS when a callout is clicked) ---- #}
 <section class="section" id="lifecycle-drilldown" style="display:none;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
     <h3 id="drilldown-title" class="section-title" style="margin-bottom:0;"></h3>
     <button type="button" class="btn btn--ghost btn--sm" id="drilldown-close">Close</button>
   </div>
+  <p id="drilldown-meta" class="note--muted" style="margin:0 0 16px;"></p>
   <div class="table-wrapper">
     <table>
       <thead>
@@ -62,6 +63,11 @@
       </thead>
       <tbody id="drilldown-rows"></tbody>
     </table>
+  </div>
+  <div style="text-align:center;margin-top:16px;">
+    <button type="button" class="btn btn--ghost btn--sm" id="drilldown-loadmore" style="display:none;">
+      Load next 100
+    </button>
   </div>
 </section>
 

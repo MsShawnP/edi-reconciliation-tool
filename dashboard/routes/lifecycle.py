@@ -156,13 +156,20 @@ def get_lifecycle_drilldown(
     callout_index: str,
     partner: str = "",
     limit: int = 100,
-) -> list[dict[str, Any]]:
-    """Return exception rows matching a lifecycle callout gap."""
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Return a page of exception rows matching a lifecycle callout gap.
+
+    Returns {"total": <full match count>, "rows": [...]}. The total is the
+    count across the whole filtered set (not just this page) so the client
+    can show "showing N of TOTAL" and offer to load the next page.
+    """
+    empty: dict[str, Any] = {"total": 0, "rows": []}
     if not db.is_configured():
-        return []
+        return empty
     exc_class = _CALLOUT_CLASS_MAP.get(callout_index)
     if not exc_class:
-        return []
+        return empty
     try:
         conditions = ["exception_class = %s"]
         params: list[Any] = [exc_class]
@@ -170,7 +177,7 @@ def get_lifecycle_drilldown(
             conditions.append("partner_id = %s")
             params.append(partner)
         where = " and ".join(conditions)
-        params.append(limit)
+        params.extend([limit, offset])
         rows = db.query(f"""
             select
                 partner_id,
@@ -181,14 +188,17 @@ def get_lifecycle_drilldown(
                 dollar_impact,
                 dispute_window_days,
                 dispute_window_expires_at,
-                dispute_urgent
+                dispute_urgent,
+                count(*) over () as total_count
             from {_SCHEMA}.fct_exceptions
             where {where}
             order by dollar_impact desc nulls last
-            limit %s
+            limit %s offset %s
         """, tuple(params))
+        total = int(rows[0]["total_count"]) if rows else 0
         from dashboard.routes.exceptions import _fmt_dollar, _CLASS_LABELS
         for row in rows:
+            row.pop("total_count", None)
             row["dollar_fmt"] = _fmt_dollar(float(row["dollar_impact"] or 0))
             row["class_label"] = _CLASS_LABELS.get(
                 row["exception_class"], row["exception_class"]
@@ -197,7 +207,7 @@ def get_lifecycle_drilldown(
                 row["dispute_window_expires_at"] = str(
                     row["dispute_window_expires_at"]
                 )
-        return rows
+        return {"total": total, "rows": rows}
     except Exception:
         logger.exception("get_lifecycle_drilldown query failed")
-        return []
+        return empty
