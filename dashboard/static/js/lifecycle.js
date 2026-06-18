@@ -342,8 +342,9 @@
   }
 
   function isValid(d) {
-    if (!d || d.ordered <= 0) return false;
+    if (!d || typeof d.ordered !== "number" || d.ordered <= 0) return false;
     if (d.paid > d.invoiced) return false;
+    if (!d.callouts || d.callouts.length < 3) return false;
     return true;
   }
 
@@ -351,12 +352,16 @@
   var serverData = null;
   try { serverData = el ? JSON.parse(el.textContent) : null; } catch (_) {}
 
+  // Distinguish "no server data" (empty {} when DB is absent) from
+  // "live data present but failed validation" (e.g. PAID > INVOICED).
+  var hasLiveData = serverData && typeof serverData.ordered === "number";
+
   var data;
-  if (serverData && isValid(serverData)) {
+  if (hasLiveData && isValid(serverData)) {
     data = serverData;
   } else {
-    data = CANONICAL;
-    if (serverData && !isValid(serverData)) data.source = "validation-fallback";
+    data = Object.assign({}, CANONICAL);
+    if (hasLiveData) data.source = "validation-fallback";
   }
 
   if (document.readyState === "loading") {
