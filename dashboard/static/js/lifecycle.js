@@ -37,13 +37,13 @@
     sans:     "'Source Sans 3', 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif",
   };
 
-  var W = 1120, H = 480;
+  var W = 1120, H = 540;
   var BOX_W = 170, BOX_H = 145;
   var BOX_TOP = 88;
   var BOX_CX = [130, 390, 650, 910];
   var ARROW_Y = BOX_TOP + BOX_H / 2;
   var CALL_TOP = BOX_TOP + BOX_H + 24;
-  var CALL_W = 150, CALL_H = 88;
+  var CALL_W = 190, CALL_H = 130;
 
   var CALLOUT_LABELS = [
     "Ordered, Not ASN'd",
@@ -223,40 +223,40 @@
         : fmtCalloutCount(co.count);
 
       calloutGroup.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + 26)
+        .attr("x", mx).attr("y", CALL_TOP + 38)
         .attr("text-anchor", "middle")
-        .style("font-family", C.sans)
-        .style("font-size", "16px")
+        .style("font-family", C.serif)
+        .style("font-size", "28px")
         .style("font-weight", "700")
         .style("fill", style.color)
         .text(calloutLabel);
 
       var descs = calloutDesc(i, data);
       calloutGroup.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + 48)
+        .attr("x", mx).attr("y", CALL_TOP + 62)
         .attr("text-anchor", "middle")
         .style("font-family", C.sans)
-        .style("font-size", "12px")
+        .style("font-size", "14px")
         .style("fill", C.sub)
         .text(descs[0]);
 
       calloutGroup.append("text")
-        .attr("x", mx).attr("y", CALL_TOP + 65)
+        .attr("x", mx).attr("y", CALL_TOP + 82)
         .attr("text-anchor", "middle")
         .style("font-family", C.sans)
-        .style("font-size", "12px")
+        .style("font-size", "13px")
         .style("fill", C.muted)
         .text(descs[1]);
 
-      // "click to drill down" hint — only show if there are records
       if (hasIssues) {
         calloutGroup.append("text")
-          .attr("x", mx).attr("y", CALL_TOP + CALL_H - 4)
+          .attr("x", mx).attr("y", CALL_TOP + CALL_H - 10)
           .attr("text-anchor", "middle")
           .style("font-family", C.sans)
-          .style("font-size", "9px")
-          .style("fill", C.muted)
-          .text("click to view orders");
+          .style("font-size", "11px")
+          .style("fill", C.navy)
+          .style("text-decoration", "underline")
+          .text("view orders ›");
       }
 
       (function(idx, active) {
