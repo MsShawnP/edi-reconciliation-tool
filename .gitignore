@@ -40,3 +40,10 @@ Thumbs.db
 
 # dbt anonymous-usage user id (machine-specific, do not commit)
 transforms/.user.yml
+
+# Security - secret leak prevention
+.env.*
+*.pem
+*.key
+credentials.*
+secrets.*
