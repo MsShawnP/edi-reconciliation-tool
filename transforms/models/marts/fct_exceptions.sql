@@ -69,7 +69,9 @@ ordered_not_asnd as (
 ),
 
 -- ---------------------------------------------------------------------------
--- shipped_not_invoiced: shipped more than invoiced (beyond tolerance)
+-- shipped_not_invoiced: shipped qty ≠ invoiced qty beyond tolerance.
+-- Positive dollar_impact = under-billed (shipped > invoiced, brand owed money).
+-- Negative dollar_impact = over-invoiced (invoiced > shipped, credit risk).
 -- ---------------------------------------------------------------------------
 shipped_not_invoiced as (
     select
@@ -77,7 +79,7 @@ shipped_not_invoiced as (
         po_number,
         sku,
         'shipped_not_invoiced'                      as exception_class,
-        abs(shipped_vs_invoiced_delta) * unit_price as dollar_impact,
+        shipped_vs_invoiced_delta * unit_price       as dollar_impact,
         60                                          as dispute_window_days,
         -- clock from ship date: brand shipped, discrepancy originates at the dock
         asn_date                                    as dispute_date_anchor,

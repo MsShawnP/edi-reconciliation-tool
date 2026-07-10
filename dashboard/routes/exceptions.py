@@ -26,13 +26,14 @@ _HERO_ORDER = [
     "missing_997_ack",
 ]
 
-# Classes included in Total Exposure sum (dollar-denominated, non-ops)
+# Classes included in Total Exposure sum (dollar-denominated, recoverable).
+# 852_discrepancy is excluded: it is a lifetime, no-tolerance timing signal
+# (shipped vs. reported sell-through), not a recoverable billing gap.
 _EXPOSURE_CLASSES = frozenset({
     "ordered_not_asnd",
     "shipped_not_invoiced",
     "short_pay",
     "qty_mismatch",
-    "852_discrepancy",
 })
 
 _CLASS_LABELS = {

@@ -8,7 +8,7 @@
   <div class="page-header__eyebrow">EDI Reconciliation</div>
   <h1 class="page-header__title">Exception Dashboard</h1>
   <p class="page-header__sub">
-    Content-level mismatches across 850 / 856 / 810 / 820 — dollar-ranked by revenue exposure.
+    Where your orders, shipments, invoices, and payments don't agree — ranked by how much money is at risk.
   </p>
 </div>
 
@@ -81,7 +81,7 @@
       <div class="exception-card__count">
         {% if card.ops_only %}unacknowledged transmissions
         {% elif card.exception_class == 'uom_mismatch' and card.exception_count == 0 %}not detectable at invoice level — <a href="/catalog#uom_mismatch" style="color:var(--navy);">see methodology</a>
-        {% elif card.exception_class == '852_discrepancy' %}<span title="Sell-through velocity across all SKU/weeks vs. per-PO dollar delta — different grain than other cards.">{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}</span>
+        {% elif card.exception_class == '852_discrepancy' %}<span title="Lifetime sell-through gap (shipped vs. reported sell-through) — a timing signal, not included in Total Exposure.">{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}</span> <span class="no-dispute-tag" style="display:inline-block;font-size:10px;">Timing signal</span>
         {% else %}{{ card.exception_count }} exception{{ 's' if card.exception_count != 1 else '' }}
         {% endif %}
       </div>
