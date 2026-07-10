@@ -25,7 +25,7 @@
     ink:      "#0d0d0d",
     border:   "#d9d9d9",
     sub:      "#595959",
-    muted:    "#959595",
+    muted:    "#b3b3b3",
     navy:     "#1f2e7a",
     rose:     "#b82d4a",
     roseSurf: "#fbe9ed",

@@ -369,7 +369,7 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
 
 .exception-card--ops {
   border-left: 3px solid var(--navy);
-  background: var(--navy-surface, #e5e8f5);
+  background: var(--navy-surface, #e8eaf4);
 }
 
 .exception-card--ops .exception-card__amount {
@@ -390,7 +390,7 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--navy);
-  background: var(--navy-surface, #e5e8f5);
+  background: var(--navy-surface, #e8eaf4);
   border: 1px solid var(--navy);
   border-radius: 2px;
   padding: 1px 4px;
@@ -561,7 +561,7 @@ tbody td {
   display: inline-block;
   font-size: 11px;
   font-weight: 600;
-  background: #f2f0ec;
+  background: #f2f2f2;
   color: #7a0906;
   border: 1px solid #d9d9d9;
   padding: 1px 6px;
@@ -864,7 +864,6 @@ tbody td {
   border-radius: 0 2px 2px 0;
   padding: 24px 28px;
   margin-bottom: 28px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 .pattern-card__header {
