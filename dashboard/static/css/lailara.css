@@ -12,32 +12,14 @@
  * -------------------------------------------------------------------------- */
 @font-face {
   font-family: 'Playfair Display';
-  src: url('/static/fonts/PlayfairDisplay-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Playfair Display';
-  src: url('/static/fonts/PlayfairDisplay-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src: url('/static/fonts/PlayfairDisplay-Variable.woff2') format('woff2');
+  font-weight: 400 700;
   font-display: swap;
 }
 @font-face {
   font-family: 'Source Sans 3';
-  src: url('/static/fonts/SourceSans3-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Source Sans 3';
-  src: url('/static/fonts/SourceSans3-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Source Sans 3';
-  src: url('/static/fonts/SourceSans3-Bold.woff2') format('woff2');
-  font-weight: 700;
+  src: url('/static/fonts/SourceSans3-Variable.woff2') format('woff2');
+  font-weight: 400 700;
   font-display: swap;
 }
 
