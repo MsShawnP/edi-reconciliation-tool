@@ -66,6 +66,9 @@ def get_date_range_bounds() -> dict[str, Any] | None:
     if not db.is_configured():
         return None
     try:
+        # dollar_impact is signed for shipped_not_invoiced (positive =
+        # under-billed, negative = over-invoiced credit risk). Exposure sums
+        # magnitudes so the two directions cannot net against each other.
         rows = db.query(f"""
             select min(dispute_date_anchor) as min_date,
                    max(dispute_date_anchor) as max_date
@@ -118,11 +121,14 @@ def get_exception_summary(
         date_clause, date_params = _date_where(date_start, date_end)
         where = f"where {date_clause}" if date_clause else ""
 
+        # dollar_impact is signed for shipped_not_invoiced (positive =
+        # under-billed, negative = over-invoiced credit risk). Exposure sums
+        # magnitudes so the two directions cannot net against each other.
         rows = db.query(f"""
             select
                 exception_class,
                 count(*)                as exception_count,
-                coalesce(sum(dollar_impact), 0) as total_dollar_impact,
+                coalesce(sum(abs(dollar_impact)), 0) as total_dollar_impact,
                 bool_or(dispute_urgent) as any_urgent
             from {_SCHEMA}.fct_exceptions
             {where}
@@ -193,6 +199,9 @@ def get_exceptions(
             params.extend(date_params)
         where = " and ".join(conditions)
         params.append(limit)
+        # dollar_impact is signed for shipped_not_invoiced (positive =
+        # under-billed, negative = over-invoiced credit risk). Exposure sums
+        # magnitudes so the two directions cannot net against each other.
         rows = db.query(f"""
             select
                 partner_id,
@@ -224,6 +233,9 @@ def get_corpus_date_range() -> str | None:
     if not db.is_configured():
         return None
     try:
+        # dollar_impact is signed for shipped_not_invoiced (positive =
+        # under-billed, negative = over-invoiced credit risk). Exposure sums
+        # magnitudes so the two directions cannot net against each other.
         rows = db.query(f"""
             select min(dispute_date_anchor) as min_date,
                    max(dispute_date_anchor) as max_date
@@ -257,6 +269,9 @@ def get_997_status() -> list[dict[str, Any]]:
     if not db.is_configured():
         return []
     try:
+        # dollar_impact is signed for shipped_not_invoiced (positive =
+        # under-billed, negative = over-invoiced credit risk). Exposure sums
+        # magnitudes so the two directions cannot net against each other.
         rows = db.query(f"""
             select
                 partner_id,

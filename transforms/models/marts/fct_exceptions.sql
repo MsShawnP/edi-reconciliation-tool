@@ -14,8 +14,10 @@
 --   missing_997_ack         — outbound document unacknowledged within 48-hour window
 --
 -- dollar_impact:
---   Revenue-affecting classes carry a positive dollar_impact.
---   missing_997_ack is operational only — dollar_impact is 0.
+--   shipped_not_invoiced is SIGNED: positive = under-billed (brand owed),
+--   negative = over-invoiced (credit risk). Other revenue-affecting classes
+--   carry a positive dollar_impact. Aggregations must not net directions —
+--   sum abs() for exposure. missing_997_ack is operational only — 0.
 --
 -- dispute_window:
 --   short_pay: 30 days from payment_date (820 date)
