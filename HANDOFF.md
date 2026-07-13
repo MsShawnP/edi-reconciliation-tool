@@ -429,3 +429,15 @@ work.
 **Next:** Fill in CLAUDE.md stack/voice sections and define first arc in PLAN.md. Then run /clarify, /office-hours, /plan-ceo-review, /plan-eng-review before building.
 
 ---
+
+## 2026-07-13 — Deploy: dbt rebuild (signed-impact mart) + fly deploy (rotated DB credential)
+
+**What changed:** Recovered the rotated cinderhaven-db credential from the Postgres app's operator secret (never written to any tracked file; edi has no .env — creds passed as env vars for this run only). Ran the transform build (`dbt deps/seed/run`) against Fly Postgres via `flyctl proxy` — rebuilt edi_staging.* views + edi_marts.int_four_way_match (86,041) + edi_marts.fct_exceptions (679,843) with the signed dollar_impact fix. Then `fly deploy` (app edi-reconciliation-tool).
+
+**Why:** The 07-08 fix makes exposure sum abs(dollar_impact) so signed directions can't net — needs `dbt run` + redeploy or the mart change isn't live.
+
+**State:** reconcile.lailarallc.com live (200); Total Exposure = $26.4M (sane positive). Mart sanity: shipped_not_invoiced carries both signed directions (min −$1,620.00 / max $468.00); per-class exposure matches the dashboard (short_pay $17.0M, qty_mismatch $4.1M, ordered_not_asnd $3.7M, shipped_not_invoiced $1.6M). Resolves the edi blocker in the 2026-07-13 STATUS UPDATE.
+
+**Next:** Nothing outstanding for this repo.
+
+---
