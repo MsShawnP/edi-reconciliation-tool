@@ -82,7 +82,7 @@ class KeheGenerator:
 
             # 810 and 820 for order
             inv_num1 = f"KEHE-INV-{order.po_number.split('-')[-1]}"
-            kehe_dist_num1 = f"KH-{isa.next():08d}"
+            kehe_dist_num1 = f"KH-{order.po_number.split('-')[-1]}"
             inv_isa = isa.next()
             inv_gs = gs.next()
             docs["810"].append(_make_810(order, inv_isa, inv_gs, inv_num1, kehe_dist_num1, inv_date1))
@@ -98,7 +98,7 @@ class KeheGenerator:
             # 810, 820, 852 for paired order
             if next_order is not None:
                 inv_num2 = f"KEHE-INV-{next_order.po_number.split('-')[-1]}"
-                kehe_dist_num2 = f"KH-{isa.next():08d}"
+                kehe_dist_num2 = f"KH-{next_order.po_number.split('-')[-1]}"
                 inv_isa2 = isa.next()
                 inv_gs2 = gs.next()
                 _inv_date2 = inv_date2 or add_days(next_order.po_date, 7)
