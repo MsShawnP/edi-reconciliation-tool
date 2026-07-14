@@ -9,6 +9,16 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-07-13 — Invoice number collision fix; Total Exposure corrected
+
+**What changed:** UNFI and KeHE corpus generators derived invoice numbers from the ISA counter, which resets per chunk. With ~17–19 chunks per partner, invoice numbers like `UNFI-INV-002005` appeared in every chunk. `payment_agg` in `int_four_way_match` summed all payments for the colliding invoice number while `invoice_amount` stayed per-PO — inflating `short_pay` from ~$440K to $17M (38× overcount). Fixed by deriving invoice numbers from PO numbers (matching existing Walmart pattern). Regenerated corpus, ran dbt, deployed.
+
+**State:** Total Exposure dropped from $26.4M to $6.0M (11.4% of $52.7M invoiced revenue — structurally correct for a 30% injection rate). short_pay: $17M → $440K. qty_mismatch: $4.1M → $330K. Commit 5cc5245 pushed, deployed to Fly (4 machines).
+
+**Next:** Verify reconcile.lailarallc.com shows corrected Total Exposure. Clean up temp .env file.
+
+---
+
 ## 2026-06-18 09:43
 
 **What changed:** Lifecycle callout fixes round 2 — deployed the mart-sourced callouts (was committed but never deployed), enlarged callout boxes, and added paginated drill-down with count header + "Load next 100".
