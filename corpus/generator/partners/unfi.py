@@ -66,7 +66,7 @@ class UnfiGenerator:
             # 810 — credit/rebill for 3rd order; normal otherwise
             if idx == 2:
                 # Original invoice
-                orig_num = f"UNFI-INV-{isa.next():06d}"
+                orig_num = f"UNFI-INV-{order.po_number.split('-')[-1]}"
                 orig_isa = isa.next()
                 orig_gs = gs.next()
                 docs["810"].append(_make_810(order, orig_isa, orig_gs, orig_num, inv_date))
@@ -86,7 +86,7 @@ class UnfiGenerator:
                                              isa.next(), gs.next(), add_days(inv_date, 3)))
                 inv_num = rb_num
             else:
-                inv_num = f"UNFI-INV-{isa.next():06d}"
+                inv_num = f"UNFI-INV-{order.po_number.split('-')[-1]}"
                 inv_isa = isa.next()
                 inv_gs = gs.next()
                 docs["810"].append(_make_810(order, inv_isa, inv_gs, inv_num, inv_date))

@@ -81,7 +81,7 @@ class KeheGenerator:
                 inv_date2 = add_days(order.po_date, 8) if next_order else None
 
             # 810 and 820 for order
-            inv_num1 = f"KEHE-INV-{isa.next():06d}"
+            inv_num1 = f"KEHE-INV-{order.po_number.split('-')[-1]}"
             kehe_dist_num1 = f"KH-{isa.next():08d}"
             inv_isa = isa.next()
             inv_gs = gs.next()
@@ -97,7 +97,7 @@ class KeheGenerator:
 
             # 810, 820, 852 for paired order
             if next_order is not None:
-                inv_num2 = f"KEHE-INV-{isa.next():06d}"
+                inv_num2 = f"KEHE-INV-{next_order.po_number.split('-')[-1]}"
                 kehe_dist_num2 = f"KH-{isa.next():08d}"
                 inv_isa2 = isa.next()
                 inv_gs2 = gs.next()
