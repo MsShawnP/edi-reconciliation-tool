@@ -9,6 +9,26 @@ For things that didn't work, see FAILURES.md.
 
 ---
 
+## 2026-07-20 — fct_exceptions dbt rebuild + credential sync
+
+**Started from:** fct_exceptions.sql had abs() removed from
+shipped_not_invoiced (sign indicates direction), but only a direct
+DB UPDATE was in place — needed dbt run to make it permanent.
+
+**Did:** Started flyctl proxy (15432:5432), ran `dbt run --select
+fct_exceptions` (PASS, 679,843 rows, 5.36s). Also set correct
+DATABASE_URL (SU_PASSWORD) on all 4 Fly app secrets including
+edi-reconciliation-tool.
+
+**State:** fct_exceptions materialized with sign-direction fix.
+Positive dollar_impact = under-billed, negative = over-invoiced.
+Future full refreshes will preserve this. All 4 machines healthy.
+
+**Next:** No blocking EDI work. Dashboard at edi.lailarallc.com
+should now show signed shipped_not_invoiced exceptions.
+
+---
+
 ## 2026-07-13 — Invoice number collision fix; Total Exposure corrected
 
 **What changed:** UNFI and KeHE corpus generators derived invoice numbers from the ISA counter, which resets per chunk. With ~17–19 chunks per partner, invoice numbers like `UNFI-INV-002005` appeared in every chunk. `payment_agg` in `int_four_way_match` summed all payments for the colliding invoice number while `invoice_amount` stayed per-PO — inflating `short_pay` from ~$440K to $17M (38× overcount). Fixed by deriving invoice numbers from PO numbers (matching existing Walmart pattern). Regenerated corpus, ran dbt, deployed.

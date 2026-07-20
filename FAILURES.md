@@ -115,6 +115,34 @@ quarto" or "scope, scrollytelling, decoration"]
 
 ---
 
+### 2026-07-20 — `dbt` command not on PATH in PowerShell; `python -m dbt` also fails
+
+**Attempted:** Running `dbt run --select fct_exceptions` via PowerShell to rebuild the fct_exceptions model.
+
+**Why it didn't work:** `dbt` is installed under the Windows Store Python user-local scripts dir (`C:\Users\mssha\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\Scripts\dbt.exe`) which is not on the PowerShell PATH. Trying `python -m dbt` also fails with "No module named dbt.__main__" — dbt doesn't support `-m` invocation.
+
+**What we tried instead:** Used the full path to the dbt exe directly. Worked immediately.
+
+**Status:** Resolved
+
+**Tags:** dbt, PATH, windows, powershell, python, pip, user-local
+
+---
+
+### 2026-07-20 — POSTGRES_PASSWORD in cinderhaven-data-platform .env was stale; SU_PASSWORD is the live credential
+
+**Attempted:** Used POSTGRES_PASSWORD from cinderhaven-data-platform/.env to authenticate to cinderhaven-db as the postgres role.
+
+**Why it didn't work:** The POSTGRES_PASSWORD env var in the "source of truth" repo had drifted from the actual live password for the postgres role. The live password matched SU_PASSWORD (a separate var in the same file used by Fly to set the superuser password). When Fly rotates or resets the password, it updates SU_PASSWORD but POSTGRES_PASSWORD can drift if not manually synced.
+
+**What we tried instead:** Tested SU_PASSWORD via SSH, confirmed it authenticates. Updated POSTGRES_PASSWORD, OPERATOR_PASSWORD, and DATABASE_URL in the platform .env, then propagated to all 11 local .env files and 4 Fly app secrets.
+
+**Status:** Resolved
+
+**Tags:** credentials, postgres, SU_PASSWORD, desync, fly.io, cinderhaven-db, env
+
+---
+
 ### 2026-06-16 — Assumed lifecycle PAID > INVOICED was caused by duplicate data loads; actual cause was 820 RMR grain
 
 **Attempted:** Hypothesized that the PAID inflation was from running the corpus loader multiple times without truncating, resulting in duplicate raw rows.

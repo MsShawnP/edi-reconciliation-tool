@@ -180,6 +180,15 @@ Each entry:
 
 ---
 
+## Credentials
+
+### 2026-07-20 — SU_PASSWORD in cinderhaven-data-platform/.env is the authoritative credential for the postgres role on cinderhaven-db
+- **Why:** POSTGRES_PASSWORD drifted from the live password (spinrate went down with 503). SU_PASSWORD is what Fly uses to set the superuser password — it's always current. POSTGRES_PASSWORD, OPERATOR_PASSWORD, and DATABASE_URL must be manually synced to match SU_PASSWORD whenever it changes.
+- **Scope:** All repos and Fly apps that connect to cinderhaven-db as the postgres user
+- **Do not:** Trust POSTGRES_PASSWORD as authoritative without verifying it matches SU_PASSWORD. When rotating credentials, update SU_PASSWORD first, then sync the others.
+
+---
+
 ## Reversed / Superseded
 
 When a decision is overturned:
