@@ -4,6 +4,15 @@ description: End-of-session wrap. Structured summary, updates HANDOFF/FAILURES/D
 
 End-of-session protocol. Do these in order. Do not skip steps.
 
+> **Secret redaction (non-negotiable, applies to every step).** Never
+> write a populated `DATABASE_URL`, connection string, password, token,
+> or API key into HANDOFF.md, FAILURES.md, DECISIONS.md, or the commit
+> message body. If a connection string with an embedded `user:password@`
+> credential appears in the session, redact it to `postgresql://…@host/db`
+> (drop the `user:password@` segment) before it goes into any of those
+> files or the commit. This includes the full session summary embedded
+> in the commit body at Step 6 — redact it there too.
+
 ## Step 1: Session summary
 
 Before writing anything to files, produce a structured summary of
@@ -67,13 +76,19 @@ Format:
 (Keep this entry compact. The full summary is captured in the commit
 message; HANDOFF.md is the at-a-glance status.)
 
+Before saving: scan the entry for credentials and redact any to
+`postgresql://…@host/db` (see banner).
+
 ## Step 3: Update FAILURES.md
 
 For each item in "What didn't work" from the summary, ask the user:
 "This failure looks worth capturing in FAILURES.md. Add it?"
 
 If yes, append using the FAILURES.md format. Confirm tags before
-saving.
+saving. A failure often involves a broken connection string or auth
+error — redact any credential to `postgresql://…@host/db` before
+writing it to FAILURES.md. The failure detail lives in the redacted
+form; the password is never the lesson.
 
 If the user says no or skip, move on. Do not push.
 
@@ -132,7 +147,10 @@ After all file updates are confirmed:
 
    The detailed summary in the commit body means the journal is
    permanently captured in git history, searchable via
-   `git log --grep=<term>`, even if HANDOFF.md gets rotated.
+   `git log --grep=<term>`, even if HANDOFF.md gets rotated. Because it
+   is permanent, redact any credential in the summary to
+   `postgresql://…@host/db` BEFORE committing — a password in a commit
+   body cannot be removed without rewriting history.
 
 4. Push to remote automatically:
    - Run `git remote -v` to check if a remote exists.
