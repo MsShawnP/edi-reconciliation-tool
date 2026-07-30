@@ -93,7 +93,11 @@ def get_date_range_bounds() -> dict[str, Any] | None:
 def _date_where(date_start: str, date_end: str) -> tuple[str, list]:
     """Build a WHERE clause fragment for date filtering on dispute_date_anchor.
 
-    Rows with NULL dispute_date_anchor (852, 997) always pass through.
+    852 rows always pass through: the class is a lifetime (partner, sku)
+    aggregate with no per-period dates, so a date range cannot apply to it —
+    the card is labeled "full corpus" in the template when a range is active.
+    997 rows pass through only while their anchor is NULL (pre-migration
+    data); once fct_exceptions carries doc_date anchors they filter normally.
     Returns (sql_fragment, params_list).
     """
     if not date_start and not date_end:
@@ -107,7 +111,12 @@ def _date_where(date_start: str, date_end: str) -> tuple[str, list]:
         conditions.append("dispute_date_anchor <= %s")
         params.append(date_end)
     date_filter = " and ".join(conditions)
-    return f"({date_filter} or dispute_date_anchor is null)", params
+    return (
+        f"(({date_filter})"
+        " or exception_class = '852_discrepancy'"
+        " or (exception_class = 'missing_997_ack'"
+        " and dispute_date_anchor is null))"
+    ), params
 
 
 def get_exception_summary(

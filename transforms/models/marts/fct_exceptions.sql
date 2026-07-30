@@ -188,7 +188,9 @@ exc_997 as (
         'missing_997_ack'                           as exception_class,
         0::numeric                                  as dollar_impact,
         null::integer                               as dispute_window_days,
-        null::date                                  as dispute_date_anchor,
+        -- doc_date anchors DATE FILTERING only; dispute_window_days stays null,
+        -- so expiry stays null and the class still carries no dispute clock.
+        doc_date                                    as dispute_date_anchor,
         null::text                                  as invoice_number,
         'missing_997_ack'                           as match_status
     from match_997
