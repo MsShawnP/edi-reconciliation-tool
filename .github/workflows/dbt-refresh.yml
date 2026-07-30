@@ -53,15 +53,30 @@ jobs:
             echo 'commit;'
             echo "select exception_class, count(*) filter (where dispute_date_anchor is not null) as anchored, count(*) as total from edi_marts.fct_exceptions group by exception_class order by exception_class;"
           } > /tmp/refresh.sql
-          # Operator password lives in the db machine's env; never printed.
-          PW=$(flyctl ssh console -a cinderhaven-db -C "printenv OPERATOR_PASSWORD" | tr -d '\r' | grep -v '^$' | tail -1)
-          test -n "$PW"
-          echo "::add-mask::$PW"
-          flyctl proxy 15432:5432 -a cinderhaven-db &
-          PROXY_PID=$!
-          for i in $(seq 1 30); do pg_isready -h localhost -p 15432 && break; sleep 2; done
-          PGPASSWORD="$PW" psql -h localhost -p 15432 -U postgres -d cinderhaven -v ON_ERROR_STOP=1 -f /tmp/refresh.sql | tee /tmp/out.txt
-          kill $PROXY_PID || true
+
+          ok=0
+
+          # Attempt 1: proxy + operator password from the machine env
+          PW=$(flyctl ssh console -a cinderhaven-db -C "printenv OPERATOR_PASSWORD" 2>/dev/null | tr -d '\r' | grep -E '^[A-Za-z0-9+/=_.~-]{8,}$' | tail -1 || true)
+          echo "captured pw length: ${#PW}"
+          if [ -n "$PW" ]; then
+            echo "::add-mask::$PW"
+            flyctl proxy 15432:5432 -a cinderhaven-db &
+            PROXY_PID=$!
+            for i in $(seq 1 30); do pg_isready -h 127.0.0.1 -p 15432 && break; sleep 2; done
+            if PGPASSWORD="$PW" psql -h 127.0.0.1 -p 15432 -U postgres -d cinderhaven -v ON_ERROR_STOP=1 -f /tmp/refresh.sql | tee /tmp/out.txt; then
+              ok=1
+            fi
+            kill $PROXY_PID 2>/dev/null || true
+          fi
+
+          # Attempt 2: run psql on the db machine itself (password expands there)
+          if [ "$ok" != "1" ]; then
+            echo "--- attempt 2: on-machine psql ---"
+            B64=$(base64 -w0 /tmp/refresh.sql)
+            flyctl ssh console -a cinderhaven-db -C "sh -c \"echo $B64 | base64 -d > /tmp/r.sql && psql postgresql://postgres:\$OPERATOR_PASSWORD@localhost:5432/cinderhaven -v ON_ERROR_STOP=1 -f /tmp/r.sql\"" | tee /tmp/out.txt
+          fi
+
           python3 - <<'PYEOF'
           import re, sys
           out = open('/tmp/out.txt').read()
