@@ -235,7 +235,8 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
 
 .date-range-bar__inputs input[type="date"]:focus {
   border-color: var(--navy);
-  box-shadow: 0 0 0 2px var(--navy-surface);
+  outline: 2px solid var(--navy-surface);
+  outline-offset: 0;
 }
 
 .date-range-bar__sep {
@@ -417,7 +418,8 @@ a:hover { color: var(--navy-hover); text-decoration: underline; }
 .filter-bar select:focus,
 .filter-bar input:focus {
   border-color: var(--navy);
-  box-shadow: 0 0 0 2px var(--navy-surface);
+  outline: 2px solid var(--navy-surface);
+  outline-offset: 0;
 }
 
 .btn {
