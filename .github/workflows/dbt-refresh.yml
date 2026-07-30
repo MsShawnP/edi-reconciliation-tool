@@ -1,0 +1,68 @@
+name: Refresh fct_exceptions (dbt)
+
+# Rebuilds the edi_marts.fct_exceptions table on the live Fly Postgres.
+# Runs automatically when this workflow file changes, or by hand.
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/dbt-refresh.yml']
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    services:
+      pg:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cinderhaven
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install dbt-postgres
+
+      - name: Compile fct_exceptions (throwaway local pg for introspection)
+        working-directory: transforms
+        env:
+          POSTGRES_PASSWORD: postgres
+        run: dbt compile --select fct_exceptions --profiles-dir .
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Rebuild mart on live db and verify
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          COMPILED=transforms/target/compiled/edi_reconciliation/models/marts/fct_exceptions.sql
+          test -s "$COMPILED"
+          {
+            echo '\pset pager off'
+            echo '\set ON_ERROR_STOP on'
+            echo '\c cinderhaven'
+            echo 'begin;'
+            echo 'create table edi_marts.fct_exceptions__fresh as ('
+            cat "$COMPILED"
+            echo ');'
+            echo 'drop table edi_marts.fct_exceptions;'
+            echo 'alter table edi_marts.fct_exceptions__fresh rename to fct_exceptions;'
+            echo 'commit;'
+            echo "select exception_class, count(*) filter (where dispute_date_anchor is not null) as anchored, count(*) as total from edi_marts.fct_exceptions group by exception_class order by exception_class;"
+          } > /tmp/refresh.sql
+          flyctl postgres connect -a cinderhaven-db < /tmp/refresh.sql | tee /tmp/out.txt
+          python3 - <<'PYEOF'
+          import re, sys
+          out = open('/tmp/out.txt').read()
+          m = re.search(r'missing_997_ack\s*\|\s*(\d+)\s*\|\s*(\d+)', out)
+          assert m, 'verification query returned no missing_997_ack row'
+          anchored, total = int(m.group(1)), int(m.group(2))
+          print(f'missing_997_ack: {anchored:,} anchored of {total:,}')
+          sys.exit(0 if anchored > 0 else 1)
+          PYEOF
